@@ -1,0 +1,24 @@
+{
+  "name": "NeuroSuite - Bem-Estar Corporativo",
+  "short_name": "NeuroSuite",
+  "description": "Detecção de estresse e coaching IA para alta performance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/neurosuite-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/neurosuite-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

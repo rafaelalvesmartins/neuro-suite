@@ -1,0 +1,7 @@
+project_id = "bphdbcrboygmminicfqv"
+
+[functions.neuro-coach]
+verify_jwt = false
+
+[functions.google-calendar]
+verify_jwt = false
