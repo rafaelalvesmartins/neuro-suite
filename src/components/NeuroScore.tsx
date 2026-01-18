@@ -14,7 +14,7 @@ interface NeuroScoreProps {
 
 export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   // 🎬 DEMO MODE: true = análise simulada perfeita | false = API Gemini real
-  const DEMO_MODE = false;
+  const DEMO_MODE = true;
 
   const [isScanning, setIsScanning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -164,7 +164,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
     }
 
     onScoreComplete(stressLevel, hrvValue);
-    
+
     toast({
       title: 'Scan completo! 🎯',
       description: `Nível de estresse: ${stressLevel === 'low' ? 'Baixo' : stressLevel === 'moderate' ? 'Moderado' : 'Alto'}${hrvValue ? ` • HRV: ${hrvValue}ms` : ''}`,
@@ -183,6 +183,15 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   const startVisionAnalysis = async () => {
     const API_KEY = import.meta.env.VITE_GEMINI_KEY as string;
 
+    if (!API_KEY || API_KEY === "SUA_CHAVE_AQUI") {
+      toast({
+        title: 'Configuração necessária',
+        description: 'Configure a chave VITE_GEMINI_KEY no arquivo .env',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Parar scan normal se estiver rodando
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
@@ -192,6 +201,8 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
     setIsAnalyzing(true);
     setProgressVision(0);
     setVisionResult('');
+
+    let stream: MediaStream | null = null;
 
     try {
       // Captura de frames
@@ -208,7 +219,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
       videoElement.srcObject = stream;
       await videoElement.play();
 
@@ -231,6 +242,11 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         if (i < 2) {
           await new Promise(resolve => setTimeout(resolve, DEMO_MODE ? 1500 : 2000));
         }
+      }
+
+      // Liberar câmera após captura
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
       }
 
       setProgressVision(60);
@@ -371,6 +387,10 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       });
       setVisionResult('');
     } finally {
+      // Garantir que câmera seja sempre liberada
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
       setIsScanning(false);
       setIsAnalyzing(false);
     }
@@ -409,7 +429,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={startScan} className="w-full h-12 sm:h-auto text-sm sm:text-base" size="lg">
+                  <Button onClick={startScan} disabled={isAnalyzing || isScanning} aria-label="Iniciar scan de estresse" className="w-full h-12 sm:h-auto text-sm sm:text-base" size="lg">
                     <Scan className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     {result ? 'Realizar novo scan' : 'Iniciar Scan (60s)'}
                   </Button>
@@ -424,6 +444,8 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           {!isScanning && !isAnalyzing && (
             <Button
               onClick={startVisionAnalysis}
+              disabled={isAnalyzing || isScanning}
+              aria-label="Análise visual com inteligência artificial Gemini"
               className="w-full h-12 sm:h-auto text-sm sm:text-base bg-purple-600 hover:bg-purple-700"
               size="lg"
             >

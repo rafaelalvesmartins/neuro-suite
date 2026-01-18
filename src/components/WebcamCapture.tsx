@@ -181,9 +181,6 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
       if (results.faceLandmarks && results.faceLandmarks.length > 0) {
         const landmarks = results.faceLandmarks[0];
         const currentEAR = calculateEAR(landmarks);
-        
-        // Log de debug detalhado com plataforma
-        console.log('Platform:', navigator.userAgent, 'Landmarks:', results.faceLandmarks.length, 'EAR:', currentEAR?.toFixed(3) || 'N/A');
 
         // Reset contador de frames sem face
         noFaceFramesRef.current = 0;
