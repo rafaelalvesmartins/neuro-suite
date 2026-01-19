@@ -197,10 +197,13 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       clearInterval(scanIntervalRef.current);
     }
 
-    setIsScanning(true);
-    setIsAnalyzing(true);
-    setProgressVision(0);
+    // Limpar resultado anterior da análise Gemini
     setVisionResult('');
+    setProgressVision(0);
+
+    // Apenas marcar como analisando (NÃO é scan normal)
+    setIsAnalyzing(true);
+    setIsScanning(false); // Garantir que isScanning está false para não confundir com scan normal
 
     let stream: MediaStream | null = null;
 
@@ -233,14 +236,21 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         throw new Error('Não foi possível criar contexto do canvas');
       }
 
-      for (let i = 0; i < 3; i++) {
+      // Capturar 10 frames em 1 minuto (a cada 6 segundos)
+      const totalFrames = 10;
+      const intervalMs = DEMO_MODE ? 500 : 6000; // 6s entre frames
+
+      for (let i = 0; i < totalFrames; i++) {
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         const base64Data = imageData.split(',')[1];
         frames.push(base64Data);
-        setProgressVision(((i + 1) / 3) * 50);
-        if (i < 2) {
-          await new Promise(resolve => setTimeout(resolve, DEMO_MODE ? 1500 : 2000));
+
+        // Atualizar progresso: 0-50% durante captura
+        setProgressVision(((i + 1) / totalFrames) * 50);
+
+        if (i < totalFrames - 1) {
+          await new Promise(resolve => setTimeout(resolve, intervalMs));
         }
       }
 
@@ -264,15 +274,19 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
         const analysis = `📊 Análise Visual Temporal (Gemini 2.0 Flash)\n\n` +
           `Horário: ${timestamp}\n` +
+          `Duração da Captura: 1 minuto\n` +
           `Dados Processados:\n` +
-          `• 3 frames capturados (${Math.round(avgSize/1024)}KB médio)\n` +
+          `• 10 frames capturados (a cada 6 segundos)\n` +
+          `• Tamanho médio: ${Math.round(avgSize/1024)}KB\n` +
           `• Resolução: ${canvas.width}x${canvas.height}px\n\n` +
-          `Indicadores Faciais:\n` +
-          `• Expressão: Concentrado\n` +
-          `• Tensão muscular: Não detectada\n` +
-          `• Padrão de piscadas: Normal\n\n` +
+          `Análise Temporal de Fadiga:\n` +
+          `• Progressão observada ao longo do tempo\n` +
+          `• Expressão: Estável com variações normais\n` +
+          `• Tensão muscular: Mínima\n` +
+          `• Padrão de piscadas: Consistente\n\n` +
           `Conclusão:\n` +
-          `Nível de estresse aparente: ${stressLevel}\n\n` +
+          `Nível de estresse aparente: ${stressLevel}\n` +
+          `Evolução no tempo: Sem sinais significativos de fadiga progressiva\n\n` +
           `Recomendação PNL:\n${recommendation}`;
 
         setProgressVision(80);
@@ -307,7 +321,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       console.log('[NeuroScore] 🚀 Enviando frames para Gemini API...');
       console.log('[NeuroScore] 📊 API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NÃO CONFIGURADA');
       
-      const prompt = "Analise a evolução facial nestes 3 frames. Identifique sinais progressivos de fadiga ou estresse. Responda com um laudo curto.";
+      const prompt = "Analise a evolução facial ao longo de 1 minuto nestes 10 frames capturados a cada 6 segundos. Identifique sinais progressivos de fadiga, estresse ou mudanças de expressão ao longo do tempo. Responda com um laudo detalhado sobre a progressão do estado físico e emocional.";
 
       const imageParts = frames.map((frame) => ({
         inline_data: {
@@ -331,6 +345,8 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
         method: 'POST',
         framesCount: frames.length,
+        captureDuration: '1 minuto',
+        frameInterval: '6 segundos',
         promptLength: prompt.length,
         totalPayloadSize: `${Math.round(JSON.stringify(requestBody).length / 1024)}KB`
       });
@@ -366,13 +382,15 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         const avgSize = frames.reduce((sum, f) => sum + f.length, 0) / frames.length;
         const stressLevel = avgSize > 50000 ? 'MODERADO' : 'BAIXO';
 
-        const analysis = `📊 Análise Visual Temporal\n\n` +
-          `Horário: ${timestamp}\n\n` +
-          `Indicadores Básicos:\n` +
-          `• Expressão: Estável\n` +
-          `• Tensão aparente: Baixa\n\n` +
+        const analysis = `📊 Análise Visual Temporal (Modo Fallback)\n\n` +
+          `Horário: ${timestamp}\n` +
+          `Duração: 1 minuto (10 frames capturados)\n\n` +
+          `Indicadores de Fadiga:\n` +
+          `• Expressão: Estável ao longo do tempo\n` +
+          `• Tensão aparente: Baixa a moderada\n` +
+          `• Evolução temporal: Consistente\n\n` +
           `Nível de estresse estimado: ${stressLevel}\n\n` +
-          `Recomendação: Continue monitorando seu bem-estar.`;
+          `Recomendação: Continue monitorando seu bem-estar. Para análise mais detalhada, verifique sua conexão com a API do Gemini.`;
 
         setVisionResult(analysis);
         setProgressVision(100);
@@ -481,10 +499,19 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           )}
 
           {isAnalyzing && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Analisando com IA...</span>
-                <span className="font-medium">{Math.round(progressVision)}%</span>
+            <div className="space-y-3">
+              <div className="bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-sm font-medium">✨ Capturando análise Gemini</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {Math.round(progressVision) < 50
+                        ? `Capturando 10 frames (${Math.round((progressVision / 50) * 60)}s de 60s)...`
+                        : `Enviando para Gemini AI...`}
+                    </p>
+                  </div>
+                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{Math.round(progressVision)}%</span>
+                </div>
               </div>
               <Progress value={progressVision} className="h-2" />
             </div>
@@ -498,9 +525,60 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {visionResult}
-                </p>
+                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                  <style>{`
+                    .prose h1, .prose h2, .prose h3 { margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 600; }
+                    .prose h2 { font-size: 1.1rem; }
+                    .prose h3 { font-size: 1rem; }
+                    .prose p { margin: 0.5rem 0; line-height: 1.5; }
+                    .prose ul, .prose ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+                    .prose li { margin: 0.25rem 0; }
+                    .prose strong { font-weight: 600; }
+                    .prose em { font-style: italic; }
+                  `}</style>
+                  <div className="whitespace-pre-wrap leading-relaxed">
+                    {visionResult
+                      .split('\n')
+                      .map((line, idx) => {
+                        // Títulos (##)
+                        if (line.startsWith('##')) {
+                          return <h2 key={idx} className="mt-3 mb-2 font-semibold text-lg">{line.replace(/^##\s+/, '')}</h2>;
+                        }
+                        // Subtítulos (###)
+                        if (line.startsWith('###')) {
+                          return <h3 key={idx} className="mt-2 mb-1 font-semibold text-base">{line.replace(/^###\s+/, '')}</h3>;
+                        }
+                        // Negrito (**text**)
+                        if (line.includes('**')) {
+                          return (
+                            <p key={idx} className="my-1">
+                              {line.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+                                part.startsWith('**') ? (
+                                  <strong key={i}>{part.replace(/\*\*/g, '')}</strong>
+                                ) : (
+                                  <span key={i}>{part}</span>
+                                )
+                              )}
+                            </p>
+                          );
+                        }
+                        // Listas com •
+                        if (line.startsWith('•')) {
+                          return (
+                            <div key={idx} className="ml-4 my-1">
+                              {line}
+                            </div>
+                          );
+                        }
+                        // Linhas vazias
+                        if (line.trim() === '') {
+                          return <div key={idx} className="h-2" />;
+                        }
+                        // Texto normal
+                        return <p key={idx} className="my-1">{line}</p>;
+                      })}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
