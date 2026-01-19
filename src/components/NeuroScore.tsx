@@ -14,7 +14,7 @@ interface NeuroScoreProps {
 
 export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   // 🎬 DEMO MODE: true = análise simulada perfeita | false = API Gemini real
-  const DEMO_MODE = true;
+  const DEMO_MODE = false;
 
   const [isScanning, setIsScanning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -253,6 +253,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
       // ===== MODO DEMO: ANÁLISE LOCAL SIMULADA =====
       if (DEMO_MODE) {
+        console.log('[NeuroScore] ⚡ DEMO_MODE ativo: análise simulada local.');
         const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const avgSize = frames.reduce((sum, f) => sum + f.length, 0) / frames.length;
         const stressLevel = avgSize > 50000 ? 'MODERADO' : 'BAIXO';
@@ -303,6 +304,9 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       }
 
       // ===== MODO REAL: INTEGRAÇÃO COM GEMINI API =====
+      console.log('[NeuroScore] 🚀 Enviando frames para Gemini API...');
+      console.log('[NeuroScore] 📊 API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NÃO CONFIGURADA');
+      
       const prompt = "Analise a evolução facial nestes 3 frames. Identifique sinais progressivos de fadiga ou estresse. Responda com um laudo curto.";
 
       const imageParts = frames.map((frame) => ({
@@ -323,6 +327,15 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         }]
       };
 
+      console.log('[NeuroScore] 📤 Request payload:', {
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        method: 'POST',
+        framesCount: frames.length,
+        promptLength: prompt.length,
+        totalPayloadSize: `${Math.round(JSON.stringify(requestBody).length / 1024)}KB`
+      });
+
+      const startTime = performance.now();
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
         {
@@ -333,12 +346,22 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           body: JSON.stringify(requestBody),
         }
       );
+      const endTime = performance.now();
+
+      console.log('[NeuroScore] 📥 Response recebida em', Math.round(endTime - startTime), 'ms');
+      console.log('[NeuroScore] 📊 Status HTTP:', response.status, response.statusText);
+      console.log('[NeuroScore] 📊 Headers:', Object.fromEntries(response.headers.entries()));
 
       const responseClone = response.clone();
       const responseText = await responseClone.text();
+      
+      console.log('[NeuroScore] 📄 Response Body (primeiros 500 chars):', responseText.substring(0, 500));
+      console.log('[NeuroScore] 📄 Response Body (completo):', responseText);
 
       // Fallback se quota excedida
       if (response.status === 429) {
+        console.warn('[NeuroScore] ⚠️ Gemini API retornou 429 (quota excedida). Usando fallback local.');
+        console.warn('[NeuroScore] ⚠️ Detalhes completos do erro 429:', responseText);
         const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const avgSize = frames.reduce((sum, f) => sum + f.length, 0) / frames.length;
         const stressLevel = avgSize > 50000 ? 'MODERADO' : 'BAIXO';
@@ -363,12 +386,20 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       }
 
       if (!response.ok) {
+        console.error('[NeuroScore] ❌ Erro na resposta da Gemini API:', response.status, responseText);
         const errorData = JSON.parse(responseText);
+        console.error('[NeuroScore] ❌ Error Data parseado:', errorData);
         throw new Error(errorData.error?.message || `Erro HTTP: ${response.status}`);
       }
 
+      console.log('[NeuroScore] ✅ Resposta recebida da Gemini API. Análise REAL realizada.');
       const data = JSON.parse(responseText);
+      console.log('[NeuroScore] ✅ Data parseado:', data);
+      console.log('[NeuroScore] ✅ Candidates:', data.candidates);
+      
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Não foi possível gerar análise.';
+      console.log('[NeuroScore] ✅ Texto extraído (primeiros 200 chars):', text.substring(0, 200));
+      console.log('[NeuroScore] ✅ Texto extraído (completo):', text);
 
       setVisionResult(text);
       setProgressVision(100);
@@ -378,7 +409,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         description: 'Resultado real da IA do Google.',
       });
     } catch (error) {
-      console.error('Erro na análise:', error);
+      console.error('[NeuroScore] ❌ Erro na análise:', error);
 
       toast({
         title: 'Erro na Análise',
@@ -387,10 +418,6 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       });
       setVisionResult('');
     } finally {
-      // Garantir que câmera seja sempre liberada
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
       setIsScanning(false);
       setIsAnalyzing(false);
     }
