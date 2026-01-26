@@ -88,16 +88,23 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
     const startWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
+          video: {
             width: { ideal: 640 },
             height: { ideal: 480 },
             facingMode: 'user',
             frameRate: { ideal: 15 }
           },
         });
-        
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          // Chamada explícita para garantir que o preview seja exibido
+          // Necessário pois alguns navegadores bloqueiam autoplay sem interação
+          try {
+            await videoRef.current.play();
+          } catch (playErr) {
+            console.warn('Autoplay bloqueado, aguardando interação:', playErr);
+          }
         }
       } catch (err) {
         setError('Erro ao acessar câmera. Permita o acesso.');
