@@ -20,6 +20,7 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
   const [faceDetected, setFaceDetected] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [isBackgroundMode, setIsBackgroundMode] = useState(false);
+  const [isStreamReady, setIsStreamReady] = useState(false);
   const intervalRef = useRef<number>();
   const scanStartTimeRef = useRef<number>(0);
   const lastEARRef = useRef<number>(1);
@@ -86,6 +87,9 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
   // Controlar câmera baseado no estado de scanning
   useEffect(() => {
     const startWebcam = async () => {
+      setIsStreamReady(false);
+      setFaceDetected(true); // Reset para evitar overlay prematuro
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -97,13 +101,27 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
         });
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          const video = videoRef.current;
+          video.srcObject = stream;
+
+          // Aguardar metadados carregarem para garantir dimensões corretas
+          await new Promise<void>((resolve) => {
+            if (video.readyState >= 2) {
+              resolve();
+            } else {
+              video.onloadedmetadata = () => resolve();
+            }
+          });
+
           // Chamada explícita para garantir que o preview seja exibido
-          // Necessário pois alguns navegadores bloqueiam autoplay sem interação
           try {
-            await videoRef.current.play();
+            await video.play();
+            setIsStreamReady(true);
+            console.log('Camera preview started successfully, dimensions:', video.videoWidth, 'x', video.videoHeight);
           } catch (playErr) {
             console.warn('Autoplay bloqueado, aguardando interação:', playErr);
+            // Mesmo com erro de autoplay, marcar stream como pronto
+            setIsStreamReady(true);
           }
         }
       } catch (err) {
@@ -116,10 +134,12 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
       startWebcam();
     } else {
       stopWebcam();
+      setIsStreamReady(false);
     }
 
     return () => {
       stopWebcam();
+      setIsStreamReady(false);
     };
   }, [isScanning]);
 
@@ -308,7 +328,7 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
           autoPlay
           playsInline
           muted
-          className="w-full h-auto max-h-[400px] object-cover sm:max-h-[500px]"
+          className="w-full min-h-[300px] h-auto max-h-[400px] object-cover sm:max-h-[500px] bg-black"
         />
         <canvas
           ref={canvasRef}
@@ -329,12 +349,24 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
         {/* Feedback visual overlay durante scan */}
         {isScanning && (
           <>
-            {/* Indicador de câmera ligada */}
-            <div className="absolute top-2 left-2 px-3 py-1 bg-green-500 text-white text-xs rounded-full flex items-center gap-2 font-bold shadow-lg">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              Câmera Ligada
-            </div>
-            
+            {/* Loading indicator enquanto stream carrega */}
+            {!isStreamReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                <div className="text-center text-white space-y-2">
+                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-sm">Iniciando câmera...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Indicador de câmera ligada - só mostra quando stream está pronto */}
+            {isStreamReady && (
+              <div className="absolute top-2 left-2 px-3 py-1 bg-green-500 text-white text-xs rounded-full flex items-center gap-2 font-bold shadow-lg">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                Câmera Ligada
+              </div>
+            )}
+
             {/* Background mode indicator */}
             {isBackgroundMode && (
               <div className="absolute top-2 right-2 px-3 py-1 bg-blue-500/90 text-white text-xs rounded-full flex items-center gap-1 animate-pulse">
@@ -342,18 +374,15 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
                 Rodando em background
               </div>
             )}
-            
-            {/* Face not detected warning */}
-            {!faceDetected && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div className="text-center space-y-2 p-4">
-                  <ArrowDown className="h-8 w-8 text-yellow-400 mx-auto animate-bounce" />
-                  <p className="text-white text-sm font-medium">Ajuste sua posição</p>
-                  <p className="text-white/70 text-xs">Posicione seu rosto na câmera</p>
-                </div>
+
+            {/* Face not detected warning - só mostra após stream carregar */}
+            {isStreamReady && !faceDetected && (
+              <div className="absolute bottom-12 left-2 right-2 px-3 py-2 bg-yellow-500/90 text-white text-xs rounded-lg flex items-center gap-2">
+                <ArrowDown className="h-4 w-4 flex-shrink-0 animate-bounce" />
+                <span>Posicione seu rosto na câmera</span>
               </div>
             )}
-            
+
             {/* Low light warning */}
             {lowLightWarning && (
               <div className="absolute bottom-2 left-2 right-2 px-3 py-2 bg-orange-500/90 text-white text-xs rounded-lg flex items-center gap-2">
