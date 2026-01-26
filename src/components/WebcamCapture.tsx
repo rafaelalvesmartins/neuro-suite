@@ -97,11 +97,22 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
         });
 
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          const video = videoRef.current;
+          video.srcObject = stream;
+
+          // Aguardar metadados carregarem para garantir dimensões corretas
+          await new Promise<void>((resolve) => {
+            if (video.readyState >= 2) {
+              resolve();
+            } else {
+              video.onloadedmetadata = () => resolve();
+            }
+          });
+
           // Chamada explícita para garantir que o preview seja exibido
-          // Necessário pois alguns navegadores bloqueiam autoplay sem interação
           try {
-            await videoRef.current.play();
+            await video.play();
+            console.log('Camera preview started successfully');
           } catch (playErr) {
             console.warn('Autoplay bloqueado, aguardando interação:', playErr);
           }
@@ -308,7 +319,7 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
           autoPlay
           playsInline
           muted
-          className="w-full h-auto max-h-[400px] object-cover sm:max-h-[500px]"
+          className="w-full min-h-[300px] h-auto max-h-[400px] object-cover sm:max-h-[500px] bg-black"
         />
         <canvas
           ref={canvasRef}
