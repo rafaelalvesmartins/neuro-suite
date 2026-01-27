@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Scan, Activity } from 'lucide-react';
+import { Scan, Activity, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import WebcamCapture from './WebcamCapture';
 
 interface NeuroScoreProps {
@@ -31,6 +32,19 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   const [visionResult, setVisionResult] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressVision, setProgressVision] = useState(0);
+
+  // Estado de idioma com persistência em localStorage
+  const [language, setLanguage] = useState<'pt' | 'en'>(() => {
+    const saved = localStorage.getItem('neurosuite-lang');
+    return (saved === 'en' ? 'en' : 'pt');
+  });
+
+  const handleLanguageChange = (value: string) => {
+    if (value === 'pt' || value === 'en') {
+      setLanguage(value);
+      localStorage.setItem('neurosuite-lang', value);
+    }
+  };
 
   // Ref para controlar interval do scan
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -321,7 +335,9 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       console.log('[NeuroScore] 🚀 Enviando frames para Gemini API...');
       console.log('[NeuroScore] 📊 API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NÃO CONFIGURADA');
       
-      const prompt = "Analise a evolução facial ao longo de 1 minuto nestes 10 frames capturados a cada 6 segundos. Identifique sinais progressivos de fadiga, estresse ou mudanças de expressão ao longo do tempo. Responda com um laudo detalhado sobre a progressão do estado físico e emocional.";
+      const prompt = language === 'pt'
+        ? "Analise a evolução facial ao longo de 1 minuto nestes 10 frames capturados a cada 6 segundos. Identifique sinais progressivos de fadiga, estresse ou mudanças de expressão ao longo do tempo. Responda em português brasileiro com um laudo detalhado sobre a progressão do estado físico e emocional."
+        : "Analyze the facial evolution over 1 minute in these 10 frames captured every 6 seconds. Identify progressive signs of fatigue, stress, or expression changes over time. Respond in English with a detailed report on the progression of physical and emotional state.";
 
       const imageParts = frames.map((frame) => ({
         inline_data: {
@@ -488,15 +504,45 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           )}
 
           {!isScanning && !isAnalyzing && (
-            <Button
-              onClick={startVisionAnalysis}
-              disabled={isAnalyzing || isScanning}
-              aria-label="Análise visual com inteligência artificial Gemini"
-              className="w-full h-12 sm:h-auto text-sm sm:text-base bg-purple-600 hover:bg-purple-700"
-              size="lg"
-            >
-              ✨ Análise Visual Temporal (Gemini)
-            </Button>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  onClick={startVisionAnalysis}
+                  disabled={isAnalyzing || isScanning}
+                  aria-label="Análise visual com inteligência artificial Gemini"
+                  className="flex-1 h-12 sm:h-auto text-sm sm:text-base bg-purple-600 hover:bg-purple-700"
+                  size="lg"
+                >
+                  ✨ {language === 'pt' ? 'Análise Visual Temporal (Gemini)' : 'Temporal Visual Analysis (Gemini)'}
+                </Button>
+
+                <ToggleGroup
+                  type="single"
+                  value={language}
+                  onValueChange={handleLanguageChange}
+                  className="border rounded-lg p-1 bg-muted/50 shrink-0"
+                >
+                  <ToggleGroupItem
+                    value="pt"
+                    aria-label="Português"
+                    className="px-2.5 py-1.5 text-xs font-medium data-[state=on]:bg-purple-600 data-[state=on]:text-white rounded-md"
+                  >
+                    PT
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="en"
+                    aria-label="English"
+                    className="px-2.5 py-1.5 text-xs font-medium data-[state=on]:bg-purple-600 data-[state=on]:text-white rounded-md"
+                  >
+                    EN
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Globe className="h-3 w-3" />
+                {language === 'pt' ? 'Resultado da análise em Português' : 'Analysis result in English'}
+              </p>
+            </div>
           )}
 
           {isAnalyzing && (
