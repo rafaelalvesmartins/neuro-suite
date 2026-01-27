@@ -457,6 +457,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           <WebcamCapture
             onBlinkDetected={handleBlinkDetected}
             isScanning={isScanning}
+            isAnalyzing={isAnalyzing}
             onScanComplete={handleScanComplete}
           />
 
