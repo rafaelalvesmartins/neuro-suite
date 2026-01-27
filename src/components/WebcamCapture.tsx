@@ -6,10 +6,11 @@ import HRVMonitor from './HRVMonitor';
 interface WebcamCaptureProps {
   onBlinkDetected: (blinkRate: number, hrvValue?: number) => void;
   isScanning: boolean;
+  isAnalyzing?: boolean;
   onScanComplete: () => void;
 }
 
-export default function WebcamCapture({ onBlinkDetected, isScanning, onScanComplete }: WebcamCaptureProps) {
+export default function WebcamCapture({ onBlinkDetected, isScanning, isAnalyzing = false, onScanComplete }: WebcamCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [faceLandmarker, setFaceLandmarker] = useState<FaceLandmarker | null>(null);
@@ -132,16 +133,19 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
 
     if (isScanning) {
       startWebcam();
-    } else {
+    } else if (!isAnalyzing) {
+      // Só para a câmera se NÃO estiver na análise Gemini
       stopWebcam();
       setIsStreamReady(false);
     }
 
     return () => {
-      stopWebcam();
-      setIsStreamReady(false);
+      if (!isAnalyzing) {
+        stopWebcam();
+        setIsStreamReady(false);
+      }
     };
-  }, [isScanning]);
+  }, [isScanning, isAnalyzing]);
 
   // Calcular EAR (Eye Aspect Ratio) - Fórmula correta
   const calculateEAR = (landmarks: any) => {
@@ -335,8 +339,8 @@ export default function WebcamCapture({ onBlinkDetected, isScanning, onScanCompl
           className="hidden"
         />
         
-        {/* Feedback visual de câmera desligada */}
-        {!isScanning && (
+        {/* Feedback visual de câmera desligada - NÃO mostra durante análise Gemini */}
+        {!isScanning && !isAnalyzing && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/90">
             <div className="text-center text-white px-4 space-y-2">
               <div className="text-5xl mb-3">📷</div>
