@@ -12,21 +12,27 @@ NeuroHealth monitors non-invasive vital signs via webcam in real-time:
 2.  **Gemini Multimodal Analysis:** Captures temporal frame sequences (video) to detect progressive facial micro-expressions of fatigue.
 3.  **NeuroCoach:** Provides instant NLP-based recommendations to lower stress.
 
-## 🤖 Gemini API Integration & Hybrid Architecture
+## 🤖 Gemini 3 API Integration & Hybrid Architecture
 We implemented a **Resilient Hybrid Architecture** to ensure zero downtime:
-- **Primary Layer (Cloud):** Attempts to connect to **Google Gemini 2.0 Flash** via REST API for deep multimodal analysis of 3 temporal frames.
+- **Primary Layer (Cloud):** Connects to **Google Gemini 3 Pro Preview** via REST API for deep multimodal analysis with advanced thinking capabilities.
 - **Secondary Layer (Edge Fallback):** If the API experiences high latency or Rate Limiting (429), the system seamlessly degrades to a local heuristic algorithm, ensuring the user always receives immediate feedback.
 
 ### API Usage Metrics (Real Implementation)
-- **Model:** gemini-2.0-flash
-- **Input:** 3 JPEG frames (~92KB payload)
-- **Token Consumption:** ~806 prompt tokens (32 text + 774 image tokens)
-- **Response Time:** ~2.6s average
-- **Output:** 62 tokens of AI-generated analysis
+- **Vision Model:** gemini-3-pro-preview (high reasoning for RAG/Vision)
+- **Chat Model:** gemini-3-flash-preview (low latency for NeuroCoach)
+- **Input:** 10 JPEG frames captured over 1 minute
+- **Configuration:** `temperature: 1.0`, `thinkingLevel: high`, `mediaResolution: high`
+- **Features:** Temporal facial analysis, stress detection, fatigue progression
+
+### Gemini 3 Migration Notes
+- SDK: `@google/genai` v1.0+
+- Temperature must be 1.0 (Gemini 3 requirement)
+- ThinkingConfig enabled for enhanced reasoning
+- MediaResolution set to high for image analysis
 
 ## 🛠️ Tech Stack
 - **Frontend:** React + TypeScript + Vite + TailwindCSS
-- **AI:** Google Gemini 2.0 Flash (Vision/Multimodal)
+- **AI:** Google Gemini 3 Pro/Flash Preview (Vision/Multimodal)
 - **Backend:** Supabase (PostgreSQL)
 - **Deployment:** Vercel
 
