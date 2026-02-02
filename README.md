@@ -73,6 +73,6 @@ npm run dev
 
 ## 🎥 Demo
 Live demo available at: [Your Vercel URL]
-
+ 
 ## 📝 License
 MIT License - See LICENSE file for details
