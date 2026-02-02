@@ -122,7 +122,8 @@ ${conversationHistory}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
+        temperature: 1.0, // Gemini 3 requer temperature = 1.0
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
