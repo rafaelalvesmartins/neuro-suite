@@ -348,25 +348,20 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
       setProgressVision(70);
 
-      // Gemini 3 Pro - configuração otimizada para RAG/Vision com thinking
+      // Gemini 2.0 Flash - modelo estável para análise multimodal
       const requestBody = {
         contents: [{
           parts: [
             { text: prompt },
             ...imageParts
           ]
-        }],
-        generationConfig: {
-          temperature: 1.0, // Gemini 3 requer temperature = 1.0
-          thinkingConfig: {
-            thinkingLevel: "high" // Raciocínio avançado para análise facial
-          },
-          mediaResolution: "high" // Alta resolução para imagens
-        }
+        }]
+        // Nota: generationConfig removido pois thinkingConfig e mediaResolution
+        // não são parâmetros válidos na API REST pública do Gemini
       };
 
       console.log('[NeuroScore] 📤 Request payload:', {
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
         method: 'POST',
         framesCount: frames.length,
         captureDuration: '1 minuto',
@@ -377,7 +372,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
       const startTime = performance.now();
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
         {
           method: 'POST',
           headers: {
