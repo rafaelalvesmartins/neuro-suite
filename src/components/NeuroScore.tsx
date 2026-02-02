@@ -348,7 +348,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
       setProgressVision(70);
 
-      // Gemini 2.0 Flash - modelo estável para análise multimodal
+      // Gemini 2.5 Flash Preview - Hackathon Gemini 3
       const requestBody = {
         contents: [{
           parts: [
@@ -356,12 +356,10 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
             ...imageParts
           ]
         }]
-        // Nota: generationConfig removido pois thinkingConfig e mediaResolution
-        // não são parâmetros válidos na API REST pública do Gemini
       };
 
       console.log('[NeuroScore] 📤 Request payload:', {
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent',
         method: 'POST',
         framesCount: frames.length,
         captureDuration: '1 minuto',
@@ -372,7 +370,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
       const startTime = performance.now();
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`,
         {
           method: 'POST',
           headers: {
