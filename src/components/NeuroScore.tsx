@@ -331,35 +331,43 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         return;
       }
 
-      // ===== MODO REAL: INTEGRAÇÃO COM GEMINI API =====
-      console.log('[NeuroScore] 🚀 Enviando frames para Gemini API...');
+      // ===== MODO REAL: INTEGRAÇÃO COM GEMINI 3 API =====
+      console.log('[NeuroScore] 🚀 Enviando frames para Gemini 3 API...');
       console.log('[NeuroScore] 📊 API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NÃO CONFIGURADA');
-      
+
       const prompt = language === 'pt'
         ? "Analise a evolução facial ao longo de 1 minuto nestes 10 frames capturados a cada 6 segundos. Identifique sinais progressivos de fadiga, estresse ou mudanças de expressão ao longo do tempo. Responda em português brasileiro com um laudo detalhado sobre a progressão do estado físico e emocional."
         : "Analyze the facial evolution over 1 minute in these 10 frames captured every 6 seconds. Identify progressive signs of fatigue, stress, or expression changes over time. Respond in English with a detailed report on the progression of physical and emotional state.";
 
+      // Gemini 3: media_resolution vai dentro de cada part de imagem
       const imageParts = frames.map((frame) => ({
         inline_data: {
           mime_type: "image/jpeg",
           data: frame,
         },
+        media_resolution: { level: "media_resolution_high" }
       }));
 
       setProgressVision(70);
 
-      // Gemini 2.5 Flash Preview - Hackathon Gemini 3
+      // Gemini 3 Flash Preview - Hackathon Gemini 3
+      // Estrutura conforme documentação oficial
       const requestBody = {
         contents: [{
           parts: [
             { text: prompt },
             ...imageParts
           ]
-        }]
+        }],
+        generationConfig: {
+          thinkingConfig: {
+            thinkingLevel: "high"
+          }
+        }
       };
 
       console.log('[NeuroScore] 📤 Request payload:', {
-        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent',
+        url: 'https://generativelanguage.googleapis.com/v1alpha/models/gemini-3-flash-preview:generateContent',
         method: 'POST',
         framesCount: frames.length,
         captureDuration: '1 minuto',
@@ -369,8 +377,9 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       });
 
       const startTime = performance.now();
+      // IMPORTANTE: Usar v1alpha para suportar media_resolution
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1alpha/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`,
         {
           method: 'POST',
           headers: {
