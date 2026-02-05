@@ -36,7 +36,7 @@ export default function DashboardRH() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Buscar scans dos últimos 7 dias (limite 100 para free tier)
+      // Get scans from last 7 days (limit 100 for free tier)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -69,46 +69,46 @@ export default function DashboardRH() {
           avgHRV: Math.round(avgHRV),
         });
 
-        // Predição simples baseada em padrões
+        // Simple prediction based on patterns
         let predictionText = '';
         if (stats.highPercent > 30) {
-          predictionText = `⚠️ Risco alto detectado (${stats.highPercent}% estresse alto). Intervenções urgentes recomendadas.`;
+          predictionText = `⚠️ High risk detected (${stats.highPercent}% high stress). Urgent interventions recommended.`;
         } else if (stats.moderatePercent > 50) {
-          predictionText = `⚡ Atenção: ${stats.moderatePercent}% em estresse moderado. Sugira pausas preventivas.`;
+          predictionText = `⚡ Attention: ${stats.moderatePercent}% at moderate stress. Suggest preventive breaks.`;
         } else {
-          predictionText = `✅ Time tá brilhando! ${stats.lowPercent}% em baixo estresse. Continue com práticas de bem-estar.`;
+          predictionText = `✅ Team is shining! ${stats.lowPercent}% at low stress. Continue wellness practices.`;
         }
         setPrediction(predictionText);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados RH:', error);
+      console.error('Error loading HR data:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const exportCSV = () => {
-    const csv = `Métrica,Valor
-Estresse Baixo (%),${stats.lowPercent}
-Estresse Moderado (%),${stats.moderatePercent}
-Estresse Alto (%),${stats.highPercent}
-Total de Scans,${stats.totalScans}
-HRV Médio (ms),${stats.avgHRV}
-Predição,"${prediction}"`;
+    const csv = `Metric,Value
+Low Stress (%),${stats.lowPercent}
+Moderate Stress (%),${stats.moderatePercent}
+High Stress (%),${stats.highPercent}
+Total Scans,${stats.totalScans}
+Average HRV (ms),${stats.avgHRV}
+Prediction,"${prediction}"`;
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dashboard-rh-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `hr-dashboard-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
   const chartData = {
-    labels: ['Baixo', 'Moderado', 'Alto'],
+    labels: ['Low', 'Moderate', 'High'],
     datasets: [
       {
-        label: '% de Estresse',
+        label: '% Stress',
         data: [stats.lowPercent, stats.moderatePercent, stats.highPercent],
         backgroundColor: [
           'rgba(34, 197, 94, 0.6)',
@@ -130,7 +130,7 @@ Predição,"${prediction}"`;
       <Card>
         <CardContent className="p-12 text-center">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando dados RH...</p>
+          <p className="text-muted-foreground">Loading HR data...</p>
         </CardContent>
       </Card>
     );
@@ -142,38 +142,38 @@ Predição,"${prediction}"`;
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart className="h-5 w-5 text-primary" />
-            Dashboard RH - Análise de Bem-Estar (7 dias)
+            HR Dashboard - Well-Being Analysis (7 days)
           </CardTitle>
           <CardDescription>
-            Dados agregados anônimos com RLS ativo • Limite 100 scans (free tier)
+            Aggregated anonymous data with RLS active • Limit 100 scans (free tier)
           </CardDescription>
           <Button onClick={exportCSV} variant="outline" size="sm" className="mt-3">
             <Download className="mr-2 h-4 w-4" />
-            Exportar CSV
+            Export CSV
           </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Estatísticas */}
+          {/* Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-              <p className="text-xs text-muted-foreground mb-1">Baixo Estresse</p>
+              <p className="text-xs text-muted-foreground mb-1">Low Stress</p>
               <p className="text-3xl font-bold text-green-500">{stats.lowPercent}%</p>
             </div>
             <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <p className="text-xs text-muted-foreground mb-1">Moderado</p>
+              <p className="text-xs text-muted-foreground mb-1">Moderate</p>
               <p className="text-3xl font-bold text-yellow-500">{stats.moderatePercent}%</p>
             </div>
             <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
-              <p className="text-xs text-muted-foreground mb-1">Alto Estresse</p>
+              <p className="text-xs text-muted-foreground mb-1">High Stress</p>
               <p className="text-3xl font-bold text-red-500">{stats.highPercent}%</p>
             </div>
             <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <p className="text-xs text-muted-foreground mb-1">HRV Médio</p>
+              <p className="text-xs text-muted-foreground mb-1">Average HRV</p>
               <p className="text-3xl font-bold text-blue-500">{stats.avgHRV}<span className="text-sm">ms</span></p>
             </div>
           </div>
 
-          {/* Gráfico */}
+          {/* Chart */}
           <div className="bg-muted/30 p-4 rounded-lg">
             <Bar
               data={chartData}
@@ -183,7 +183,7 @@ Predição,"${prediction}"`;
                   legend: { display: false },
                   title: {
                     display: true,
-                    text: 'Distribuição de Níveis de Estresse',
+                    text: 'Stress Level Distribution',
                   },
                 },
                 scales: {
@@ -199,13 +199,13 @@ Predição,"${prediction}"`;
             />
           </div>
 
-          {/* Predição */}
+          {/* Prediction */}
           <Card className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-purple-500/30">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <TrendingUp className="h-5 w-5 text-purple-500 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-sm mb-1">🤖 Análise Preditiva (IA):</p>
+                  <p className="font-semibold text-sm mb-1">Predictive Analysis (AI):</p>
                   <p className="text-sm text-muted-foreground">{prediction}</p>
                 </div>
               </div>
@@ -218,27 +218,27 @@ Predição,"${prediction}"`;
               <div className="flex items-start gap-2 sm:gap-3">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-semibold text-xs sm:text-sm mb-1">📋 Experiência do Usuário:</p>
+                  <p className="font-semibold text-xs sm:text-sm mb-1">User Experience:</p>
                   <p className="text-[10px] sm:text-xs text-muted-foreground mb-2">
-                    Compartilhe sua experiência aqui para melhorarmos nossa plataforma
+                    Share your experience here to help us improve our platform
                   </p>
                   <Button
                     size="sm"
                     className="w-full sm:w-auto font-semibold shadow-lg hover:scale-105 transition-transform text-xs sm:text-sm"
                     onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSe81DxmsG0amW42BCTsr2w2nplmT8uLsedNpNVCE-pC7HCj_g/viewform?usp=dialog', '_blank')}
                   >
-                    Seu Feedback Aqui
+                    Your Feedback Here
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Métricas */}
+          {/* Metrics */}
           <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-            <p className="font-semibold mb-1">📊 Métricas (últimos 7 dias):</p>
-            <p>• Total de scans: {stats.totalScans}</p>
-            <p>• HRV médio: {stats.avgHRV}ms {stats.avgHRV > 50 ? '(Boa resiliência)' : stats.avgHRV > 30 ? '(Normal)' : '(Atenção necessária)'}</p>
+            <p className="font-semibold mb-1">Metrics (last 7 days):</p>
+            <p>• Total scans: {stats.totalScans}</p>
+            <p>• Average HRV: {stats.avgHRV}ms {stats.avgHRV > 50 ? '(Good resilience)' : stats.avgHRV > 30 ? '(Normal)' : '(Attention needed)'}</p>
           </div>
         </CardContent>
       </Card>

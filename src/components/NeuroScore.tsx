@@ -14,7 +14,7 @@ interface NeuroScoreProps {
 }
 
 export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
-  // 🎬 DEMO MODE: true = análise simulada perfeita | false = API Gemini real
+  // DEMO MODE: true = simulated perfect analysis | false = real Gemini API
   const DEMO_MODE = false;
 
   const [isScanning, setIsScanning] = useState(false);
@@ -28,12 +28,12 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   const [userName, setUserName] = useState<string>('');
   const { toast } = useToast();
 
-  // Estados para Gemini Vision
+  // States for Gemini Vision
   const [visionResult, setVisionResult] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressVision, setProgressVision] = useState(0);
 
-  // Estado de idioma com persistência em localStorage
+  // Language state with localStorage persistence
   const [language, setLanguage] = useState<'pt' | 'en'>(() => {
     const saved = localStorage.getItem('neurosuite-lang');
     return (saved === 'en' ? 'en' : 'pt');
@@ -46,10 +46,10 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
     }
   };
 
-  // Ref para controlar interval do scan
+  // Ref to control scan interval
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Limpar interval ao desmontar
+  // Clear interval on unmount
   useEffect(() => {
     return () => {
       if (scanIntervalRef.current) {
@@ -58,13 +58,13 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
     };
   }, []);
 
-  // Carregar nome do usuário e último scan ao montar
+  // Load user name and last scan on mount
   useEffect(() => {
     const loadUserDataAndScan = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Buscar perfil do usuário
+          // Get user profile
           const { data: profile } = await supabase
             .from('profiles')
             .select('preferred_name, full_name')
@@ -75,7 +75,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
             setUserName(profile.preferred_name || profile.full_name || '');
           }
 
-          // Buscar último scan
+          // Get last scan
           const { data } = await supabase
             .from('stress_scans')
             .select('*')
@@ -86,13 +86,13 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
           if (data) {
             let emoji = '😊';
-            let message = 'Foco otimizado, produtividade alta';
+            let message = 'Optimized focus, high productivity';
             if (data.stress_level === 'moderate') {
               emoji = '😐';
-              message = 'Atenção normal, sugira pausas para evitar burnout';
+              message = 'Normal attention, suggest breaks to avoid burnout';
             } else if (data.stress_level === 'high') {
               emoji = '😟';
-              message = 'Alerta estresse, priorize reequilíbrio (NR-1)';
+              message = 'Stress alert, prioritize rebalancing (NR-1)';
             }
 
             setResult({
@@ -104,7 +104,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.error('Error loading data:', error);
       }
     };
 
@@ -112,39 +112,39 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
   }, []);
 
   const startScan = () => {
-    // Limpar interval anterior se existir
+    // Clear previous interval if exists
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
     }
 
     setIsScanning(true);
     setProgress(0);
-    setVisionResult(''); // Limpar resultado anterior do Gemini
+    setVisionResult(''); // Clear previous Gemini result
 
-    // Simular progresso
+    // Simulate progress
     scanIntervalRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
           return 100;
         }
-        return prev + (100 / 60); // 60 segundos
+        return prev + (100 / 60); // 60 seconds
       });
     }, 1000);
   };
 
   const handleBlinkDetected = async (blinkRate: number, hrvValue?: number) => {
     let stressLevel = 'low';
-    let message = 'Foco otimizado, produtividade alta';
+    let message = 'Optimized focus, high productivity';
     let emoji = '😊';
 
     if (blinkRate >= 15 && blinkRate <= 25) {
       stressLevel = 'moderate';
-      message = 'Atenção normal, sugira pausas para evitar burnout';
+      message = 'Normal attention, suggest breaks to avoid burnout';
       emoji = '😐';
     } else if (blinkRate > 25) {
       stressLevel = 'high';
-      message = 'Alerta estresse, priorize reequilíbrio (NR-1)';
+      message = 'Stress alert, prioritize rebalancing (NR-1)';
       emoji = '😟';
     }
 
@@ -155,14 +155,14 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       emoji,
     });
 
-    // Validação cruzada: HRV<30ms + piscadas>25/min = alerta alto
+    // Cross-validation: HRV<30ms + blinks>25/min = high alert
     if (hrvValue && hrvValue < 30 && blinkRate > 25) {
       stressLevel = 'high';
-      message = 'Alerta estresse: HRV baixo + piscadas altas (validação cruzada)';
+      message = 'Stress alert: Low HRV + high blinks (cross-validation)';
       emoji = '🚨';
     }
 
-    // Salvar no banco
+    // Save to database
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -174,14 +174,14 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         });
       }
     } catch (error) {
-      console.error('Erro ao salvar scan:', error);
+      console.error('Error saving scan:', error);
     }
 
     onScoreComplete(stressLevel, hrvValue);
 
     toast({
-      title: 'Scan completo! 🎯',
-      description: `Nível de estresse: ${stressLevel === 'low' ? 'Baixo' : stressLevel === 'moderate' ? 'Moderado' : 'Alto'}${hrvValue ? ` • HRV: ${hrvValue}ms` : ''}`,
+      title: 'Scan complete!',
+      description: `Stress level: ${stressLevel === 'low' ? 'Low' : stressLevel === 'moderate' ? 'Moderate' : 'High'}${hrvValue ? ` • HRV: ${hrvValue}ms` : ''}`,
     });
   };
 
@@ -193,44 +193,44 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
     setProgress(100);
   };
 
-  // Função de análise com Google Gemini Vision
+  // Analysis function with Google Gemini Vision
   const startVisionAnalysis = async () => {
     const API_KEY = import.meta.env.VITE_GEMINI_KEY as string;
 
-    if (!API_KEY || API_KEY === "SUA_CHAVE_AQUI") {
+    if (!API_KEY || API_KEY === "YOUR_KEY_HERE") {
       toast({
-        title: 'Configuração necessária',
-        description: 'Configure a chave VITE_GEMINI_KEY no arquivo .env',
+        title: 'Configuration required',
+        description: 'Configure the VITE_GEMINI_KEY key in the .env file',
         variant: 'destructive',
       });
       return;
     }
 
-    // Parar scan normal se estiver rodando
+    // Stop normal scan if running
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
     }
 
-    // Limpar resultado anterior da análise Gemini
+    // Clear previous Gemini analysis result
     setVisionResult('');
     setProgressVision(0);
 
-    // Apenas marcar como analisando (NÃO é scan normal)
+    // Only mark as analyzing (NOT normal scan)
     setIsAnalyzing(true);
-    setIsScanning(false); // Garantir que isScanning está false para não confundir com scan normal
+    setIsScanning(false); // Ensure isScanning is false to not confuse with normal scan
 
     let stream: MediaStream | null = null;
 
     try {
-      // Captura de frames
+      // Frame capture
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const videoElement = document.querySelector('video') as HTMLVideoElement;
 
       if (!videoElement) {
         toast({
-          title: 'Câmera não encontrada',
-          description: "Por favor, ative a câmera primeiro.",
+          title: 'Camera not found',
+          description: "Please enable the camera first.",
           variant: 'destructive',
         });
         return;
@@ -247,12 +247,12 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
-        throw new Error('Não foi possível criar contexto do canvas');
+        throw new Error('Could not create canvas context');
       }
 
-      // Capturar 10 frames em 1 minuto (a cada 6 segundos)
+      // Capture 10 frames in 1 minute (every 6 seconds)
       const totalFrames = 10;
-      const intervalMs = DEMO_MODE ? 500 : 6000; // 6s entre frames
+      const intervalMs = DEMO_MODE ? 500 : 6000; // 6s between frames
 
       for (let i = 0; i < totalFrames; i++) {
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
@@ -260,7 +260,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         const base64Data = imageData.split(',')[1];
         frames.push(base64Data);
 
-        // Atualizar progresso: 0-50% durante captura
+        // Update progress: 0-50% during capture
         setProgressVision(((i + 1) / totalFrames) * 50);
 
         if (i < totalFrames - 1) {
@@ -268,40 +268,40 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         }
       }
 
-      // Liberar câmera após captura
+      // Release camera after capture
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
       setProgressVision(60);
 
-      // ===== MODO DEMO: ANÁLISE LOCAL SIMULADA =====
+      // ===== DEMO MODE: LOCAL SIMULATED ANALYSIS =====
       if (DEMO_MODE) {
-        console.log('[NeuroScore] ⚡ DEMO_MODE ativo: análise simulada local.');
-        const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        console.log('[NeuroScore] DEMO_MODE active: local simulated analysis.');
+        const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const avgSize = frames.reduce((sum, f) => sum + f.length, 0) / frames.length;
-        const stressLevel = avgSize > 50000 ? 'MODERADO' : 'BAIXO';
+        const stressLevel = avgSize > 50000 ? 'MODERATE' : 'LOW';
 
-        const recommendation = stressLevel === 'MODERADO'
-           ? 'Pausas regulares de 5-10 minutos a cada hora recomendadas.'
-           : 'Continue seu ritmo de trabalho equilibrado.';
+        const recommendation = stressLevel === 'MODERATE'
+           ? 'Regular 5-10 minute breaks every hour are recommended.'
+           : 'Continue your balanced work rhythm.';
 
-        const analysis = `📊 Análise Visual Temporal (Gemini 2.0 Flash)\n\n` +
-          `Horário: ${timestamp}\n` +
-          `Duração da Captura: 1 minuto\n` +
-          `Dados Processados:\n` +
-          `• 10 frames capturados (a cada 6 segundos)\n` +
-          `• Tamanho médio: ${Math.round(avgSize/1024)}KB\n` +
-          `• Resolução: ${canvas.width}x${canvas.height}px\n\n` +
-          `Análise Temporal de Fadiga:\n` +
-          `• Progressão observada ao longo do tempo\n` +
-          `• Expressão: Estável com variações normais\n` +
-          `• Tensão muscular: Mínima\n` +
-          `• Padrão de piscadas: Consistente\n\n` +
-          `Conclusão:\n` +
-          `Nível de estresse aparente: ${stressLevel}\n` +
-          `Evolução no tempo: Sem sinais significativos de fadiga progressiva\n\n` +
-          `Recomendação PNL:\n${recommendation}`;
+        const analysis = `Visual Temporal Analysis (Gemini 3 Flash)\n\n` +
+          `Time: ${timestamp}\n` +
+          `Capture Duration: 1 minute\n` +
+          `Processed Data:\n` +
+          `• 10 frames captured (every 6 seconds)\n` +
+          `• Average size: ${Math.round(avgSize/1024)}KB\n` +
+          `• Resolution: ${canvas.width}x${canvas.height}px\n\n` +
+          `Temporal Fatigue Analysis:\n` +
+          `• Progression observed over time\n` +
+          `• Expression: Stable with normal variations\n` +
+          `• Muscle tension: Minimal\n` +
+          `• Blink pattern: Consistent\n\n` +
+          `Conclusion:\n` +
+          `Apparent stress level: ${stressLevel}\n` +
+          `Time evolution: No significant signs of progressive fatigue\n\n` +
+          `NLP Recommendation:\n${recommendation}`;
 
         setProgressVision(80);
         await new Promise(resolve => setTimeout(resolve, 600));
@@ -309,37 +309,37 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
 
         setVisionResult(analysis);
 
-        // Salvar no banco
+        // Save to database
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
             await supabase.from('stress_scans').insert({
               user_id: user.id,
               blink_rate: 0,
-              stress_level: stressLevel === 'MODERADO' ? 'moderate' : 'low',
+              stress_level: stressLevel === 'MODERATE' ? 'moderate' : 'low',
               hrv_value: null,
             });
           }
         } catch (err) {
-          console.error('Erro ao salvar:', err);
+          console.error('Error saving:', err);
         }
 
         toast({
-          title: '✨ Análise Completa!',
-          description: 'Processamento temporal finalizado.',
+          title: 'Analysis Complete!',
+          description: 'Temporal processing finished.',
         });
         return;
       }
 
-      // ===== MODO REAL: INTEGRAÇÃO COM GEMINI 3 API =====
-      console.log('[NeuroScore] 🚀 Enviando frames para Gemini 3 API...');
-      console.log('[NeuroScore] 📊 API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NÃO CONFIGURADA');
+      // ===== REAL MODE: GEMINI 3 API INTEGRATION =====
+      console.log('[NeuroScore] Sending frames to Gemini 3 API...');
+      console.log('[NeuroScore] API Key:', API_KEY ? `${API_KEY.substring(0, 15)}...` : 'NOT CONFIGURED');
 
       const prompt = language === 'pt'
         ? "Analise a evolução facial ao longo de 1 minuto nestes 10 frames capturados a cada 6 segundos. Identifique sinais progressivos de fadiga, estresse ou mudanças de expressão ao longo do tempo. Responda em português brasileiro com um laudo detalhado sobre a progressão do estado físico e emocional."
         : "Analyze the facial evolution over 1 minute in these 10 frames captured every 6 seconds. Identify progressive signs of fatigue, stress, or expression changes over time. Respond in English with a detailed report on the progression of physical and emotional state.";
 
-      // Gemini 3: media_resolution vai dentro de cada part de imagem
+      // Gemini 3: media_resolution goes inside each image part
       const imageParts = frames.map((frame) => ({
         inline_data: {
           mime_type: "image/jpeg",
@@ -351,7 +351,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       setProgressVision(70);
 
       // Gemini 3 Flash Preview - Hackathon Gemini 3
-      // Estrutura conforme documentação oficial
+      // Structure according to official documentation
       const requestBody = {
         contents: [{
           parts: [
@@ -366,18 +366,18 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         }
       };
 
-      console.log('[NeuroScore] 📤 Request payload:', {
+      console.log('[NeuroScore] Request payload:', {
         url: 'https://generativelanguage.googleapis.com/v1alpha/models/gemini-3-flash-preview:generateContent',
         method: 'POST',
         framesCount: frames.length,
-        captureDuration: '1 minuto',
-        frameInterval: '6 segundos',
+        captureDuration: '1 minute',
+        frameInterval: '6 seconds',
         promptLength: prompt.length,
         totalPayloadSize: `${Math.round(JSON.stringify(requestBody).length / 1024)}KB`
       });
 
       const startTime = performance.now();
-      // IMPORTANTE: Usar v1alpha para suportar media_resolution
+      // IMPORTANT: Use v1alpha to support media_resolution
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1alpha/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`,
         {
@@ -390,74 +390,74 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
       );
       const endTime = performance.now();
 
-      console.log('[NeuroScore] 📥 Response recebida em', Math.round(endTime - startTime), 'ms');
-      console.log('[NeuroScore] 📊 Status HTTP:', response.status, response.statusText);
-      console.log('[NeuroScore] 📊 Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('[NeuroScore] Response received in', Math.round(endTime - startTime), 'ms');
+      console.log('[NeuroScore] HTTP Status:', response.status, response.statusText);
+      console.log('[NeuroScore] Headers:', Object.fromEntries(response.headers.entries()));
 
       const responseClone = response.clone();
       const responseText = await responseClone.text();
-      
-      console.log('[NeuroScore] 📄 Response Body (primeiros 500 chars):', responseText.substring(0, 500));
-      console.log('[NeuroScore] 📄 Response Body (completo):', responseText);
 
-      // Fallback se quota excedida
+      console.log('[NeuroScore] Response Body (first 500 chars):', responseText.substring(0, 500));
+      console.log('[NeuroScore] Response Body (complete):', responseText);
+
+      // Fallback if quota exceeded
       if (response.status === 429) {
-        console.warn('[NeuroScore] ⚠️ Gemini API retornou 429 (quota excedida). Usando fallback local.');
-        console.warn('[NeuroScore] ⚠️ Detalhes completos do erro 429:', responseText);
-        const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        console.warn('[NeuroScore] Gemini API returned 429 (quota exceeded). Using local fallback.');
+        console.warn('[NeuroScore] Full error details 429:', responseText);
+        const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const avgSize = frames.reduce((sum, f) => sum + f.length, 0) / frames.length;
-        const stressLevel = avgSize > 50000 ? 'MODERADO' : 'BAIXO';
+        const stressLevel = avgSize > 50000 ? 'MODERATE' : 'LOW';
 
-        const analysis = `📊 Análise Visual Temporal (Modo Fallback)\n\n` +
-          `Horário: ${timestamp}\n` +
-          `Duração: 1 minuto (10 frames capturados)\n\n` +
-          `Indicadores de Fadiga:\n` +
-          `• Expressão: Estável ao longo do tempo\n` +
-          `• Tensão aparente: Baixa a moderada\n` +
-          `• Evolução temporal: Consistente\n\n` +
-          `Nível de estresse estimado: ${stressLevel}\n\n` +
-          `Recomendação: Continue monitorando seu bem-estar. Para análise mais detalhada, verifique sua conexão com a API do Gemini.`;
+        const analysis = `Visual Temporal Analysis (Fallback Mode)\n\n` +
+          `Time: ${timestamp}\n` +
+          `Duration: 1 minute (10 frames captured)\n\n` +
+          `Fatigue Indicators:\n` +
+          `• Expression: Stable over time\n` +
+          `• Apparent tension: Low to moderate\n` +
+          `• Temporal evolution: Consistent\n\n` +
+          `Estimated stress level: ${stressLevel}\n\n` +
+          `Recommendation: Continue monitoring your well-being. For more detailed analysis, check your Gemini API connection.`;
 
         setVisionResult(analysis);
         setProgressVision(100);
 
         toast({
-          title: 'Análise Completa',
-          description: 'Processamento local finalizado.',
+          title: 'Analysis Complete',
+          description: 'Local processing finished.',
           variant: 'default',
         });
         return;
       }
 
       if (!response.ok) {
-        console.error('[NeuroScore] ❌ Erro na resposta da Gemini API:', response.status, responseText);
+        console.error('[NeuroScore] Error in Gemini API response:', response.status, responseText);
         const errorData = JSON.parse(responseText);
-        console.error('[NeuroScore] ❌ Error Data parseado:', errorData);
-        throw new Error(errorData.error?.message || `Erro HTTP: ${response.status}`);
+        console.error('[NeuroScore] Parsed Error Data:', errorData);
+        throw new Error(errorData.error?.message || `HTTP Error: ${response.status}`);
       }
 
-      console.log('[NeuroScore] ✅ Resposta recebida da Gemini API. Análise REAL realizada.');
+      console.log('[NeuroScore] Response received from Gemini API. REAL analysis performed.');
       const data = JSON.parse(responseText);
-      console.log('[NeuroScore] ✅ Data parseado:', data);
-      console.log('[NeuroScore] ✅ Candidates:', data.candidates);
-      
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Não foi possível gerar análise.';
-      console.log('[NeuroScore] ✅ Texto extraído (primeiros 200 chars):', text.substring(0, 200));
-      console.log('[NeuroScore] ✅ Texto extraído (completo):', text);
+      console.log('[NeuroScore] Parsed data:', data);
+      console.log('[NeuroScore] Candidates:', data.candidates);
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not generate analysis.';
+      console.log('[NeuroScore] Extracted text (first 200 chars):', text.substring(0, 200));
+      console.log('[NeuroScore] Extracted text (complete):', text);
 
       setVisionResult(text);
       setProgressVision(100);
 
       toast({
-        title: '✅ Análise Gemini Completa!',
-        description: 'Resultado real da IA do Google.',
+        title: 'Gemini Analysis Complete!',
+        description: 'Real result from Google AI.',
       });
     } catch (error) {
-      console.error('[NeuroScore] ❌ Erro na análise:', error);
+      console.error('[NeuroScore] Analysis error:', error);
 
       toast({
-        title: 'Erro na Análise',
-        description: error instanceof Error ? error.message : 'Erro ao processar análise visual.',
+        title: 'Analysis Error',
+        description: error instanceof Error ? error.message : 'Error processing visual analysis.',
         variant: 'destructive',
       });
       setVisionResult('');
@@ -473,10 +473,10 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            NeuroScore - Detecção de Estresse
+            NeuroScore - Stress Detection
           </CardTitle>
           <CardDescription>
-            Análise de taxa de piscadas via webcam para estimar estresse (baseado em neurociência)
+            Blink rate analysis via webcam to estimate stress (based on neuroscience)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -490,7 +490,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
           {isScanning && !isAnalyzing && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Progresso do scan</span>
+                <span>Scan progress</span>
                 <span className="font-medium">{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -501,13 +501,13 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={startScan} disabled={isAnalyzing || isScanning} aria-label="Iniciar scan de estresse" className="w-full h-12 sm:h-auto text-sm sm:text-base" size="lg">
+                  <Button onClick={startScan} disabled={isAnalyzing || isScanning} aria-label="Start stress scan" className="w-full h-12 sm:h-auto text-sm sm:text-base" size="lg">
                     <Scan className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    {result ? 'Realizar novo scan' : 'Iniciar Scan (60s)'}
+                    {result ? 'New scan' : 'Start Scan (60s)'}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Funciona corretamente pelo computador. Integrações com Slack, Zoom, Meet, Teams em breve.</p>
+                  <p>Works correctly on computer. Slack, Zoom, Meet, Teams integrations coming soon.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -519,11 +519,11 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                 <Button
                   onClick={startVisionAnalysis}
                   disabled={isAnalyzing || isScanning}
-                  aria-label="Análise visual com inteligência artificial Gemini"
+                  aria-label="Visual analysis with Gemini AI"
                   className="flex-1 h-12 sm:h-auto text-sm sm:text-base bg-purple-600 hover:bg-purple-700"
                   size="lg"
                 >
-                  ✨ {language === 'pt' ? 'Análise Visual Temporal (Gemini)' : 'Temporal Visual Analysis (Gemini)'}
+                  ✨ {language === 'pt' ? 'Temporal Visual Analysis (Gemini)' : 'Temporal Visual Analysis (Gemini)'}
                 </Button>
 
                 <ToggleGroup
@@ -534,7 +534,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                 >
                   <ToggleGroupItem
                     value="pt"
-                    aria-label="Português"
+                    aria-label="Portuguese"
                     className="px-2.5 py-1.5 text-xs font-medium data-[state=on]:bg-purple-600 data-[state=on]:text-white rounded-md"
                   >
                     PT
@@ -550,7 +550,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Globe className="h-3 w-3" />
-                {language === 'pt' ? 'Resultado da análise em Português' : 'Analysis result in English'}
+                {language === 'pt' ? 'Analysis result in Portuguese' : 'Analysis result in English'}
               </p>
             </div>
           )}
@@ -560,11 +560,11 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
               <div className="bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg p-3">
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-sm font-medium">✨ Capturando análise Gemini</span>
+                    <span className="text-sm font-medium">✨ Capturing Gemini analysis</span>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                       {Math.round(progressVision) < 50
-                        ? `Capturando 10 frames (${Math.round((progressVision / 50) * 60)}s de 60s)...`
-                        : `Enviando para Gemini AI...`}
+                        ? `Capturing 10 frames (${Math.round((progressVision / 50) * 60)}s of 60s)...`
+                        : `Sending to Gemini AI...`}
                     </p>
                   </div>
                   <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{Math.round(progressVision)}%</span>
@@ -578,7 +578,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
             <Card className="bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800">
               <CardHeader>
                 <CardTitle className="text-purple-700 dark:text-purple-300 flex items-center gap-2">
-                  ✨ Laudo Gemini Vision
+                  ✨ Gemini Vision Report
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -597,15 +597,15 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                     {visionResult
                       .split('\n')
                       .map((line, idx) => {
-                        // Títulos (##)
+                        // Titles (##)
                         if (line.startsWith('##')) {
                           return <h2 key={idx} className="mt-3 mb-2 font-semibold text-lg">{line.replace(/^##\s+/, '')}</h2>;
                         }
-                        // Subtítulos (###)
+                        // Subtitles (###)
                         if (line.startsWith('###')) {
                           return <h3 key={idx} className="mt-2 mb-1 font-semibold text-base">{line.replace(/^###\s+/, '')}</h3>;
                         }
-                        // Negrito (**text**)
+                        // Bold (**text**)
                         if (line.includes('**')) {
                           return (
                             <p key={idx} className="my-1">
@@ -619,7 +619,7 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                             </p>
                           );
                         }
-                        // Listas com •
+                        // Lists with •
                         if (line.startsWith('•')) {
                           return (
                             <div key={idx} className="ml-4 my-1">
@@ -627,11 +627,11 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                             </div>
                           );
                         }
-                        // Linhas vazias
+                        // Empty lines
                         if (line.trim() === '') {
                           return <div key={idx} className="h-2" />;
                         }
-                        // Texto normal
+                        // Normal text
                         return <p key={idx} className="my-1">{line}</p>;
                       })}
                   </div>
@@ -646,34 +646,34 @@ export default function NeuroScore({ onScoreComplete }: NeuroScoreProps) {
                 <div className="text-6xl">{result.emoji}</div>
                 <h3 className="text-2xl font-bold">
                   {userName && <span>{userName}, </span>}
-                  {result.stressLevel === 'low' && 'Nível Baixo'}
-                  {result.stressLevel === 'moderate' && 'Nível Moderado'}
-                  {result.stressLevel === 'high' && 'Nível Alto'}
+                  {result.stressLevel === 'low' && 'Low Level'}
+                  {result.stressLevel === 'moderate' && 'Moderate Level'}
+                  {result.stressLevel === 'high' && 'High Level'}
                 </h3>
                 <p className="text-muted-foreground">{result.message}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Taxa de piscadas</p>
+                  <p className="text-sm text-muted-foreground">Blink rate</p>
                   <p className="text-2xl font-bold text-primary">{result.blinkRate}/min</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Diagnóstico</p>
+                  <p className="text-sm text-muted-foreground">Diagnosis</p>
                   <p className="text-2xl font-bold text-secondary">
-                    {result.stressLevel === 'low' && 'Ótimo'}
+                    {result.stressLevel === 'low' && 'Great'}
                     {result.stressLevel === 'moderate' && 'Normal'}
-                    {result.stressLevel === 'high' && 'Alerta'}
+                    {result.stressLevel === 'high' && 'Alert'}
                   </p>
                 </div>
               </div>
 
               <div className="p-4 bg-primary/5 rounded-lg">
-                <p className="text-sm font-medium mb-2">💡 Dica PNL:</p>
+                <p className="text-sm font-medium mb-2">NLP Tip:</p>
                 <p className="text-sm text-muted-foreground">
-                  {result.stressLevel === 'low' && 'Ancore uma memória de sucesso para manter alta performance.'}
-                  {result.stressLevel === 'moderate' && 'Pratique respiração 4-7-8 para reequilíbrio rápido.'}
-                  {result.stressLevel === 'high' && 'Pause agora: 2min de respiração profunda + reframe mental (PNL).'}
+                  {result.stressLevel === 'low' && 'Anchor a success memory to maintain high performance.'}
+                  {result.stressLevel === 'moderate' && 'Practice 4-7-8 breathing for quick rebalancing.'}
+                  {result.stressLevel === 'high' && 'Pause now: 2min deep breathing + mental reframe (NLP).'}
                 </p>
               </div>
             </div>

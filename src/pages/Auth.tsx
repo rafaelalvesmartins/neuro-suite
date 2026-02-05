@@ -25,7 +25,7 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const validated = loginSchema.parse({ email: loginEmail, password: loginPassword });
       const { error } = await signIn(validated.email, validated.password);
@@ -37,14 +37,14 @@ export default function Auth() {
         toast.error(error.errors[0].message);
       }
     }
-    
+
     setIsLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const validated = signupSchema.parse({
         email: signupEmail,
@@ -52,14 +52,14 @@ export default function Auth() {
         fullName: signupName,
         preferredName: signupPreferredName,
       });
-      
+
       const { error } = await signUp(
         validated.email,
         validated.password,
         validated.fullName,
         validated.preferredName
       );
-      
+
       if (!error) {
         navigate('/');
       }
@@ -68,7 +68,7 @@ export default function Auth() {
         toast.error(error.errors[0].message);
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -80,14 +80,14 @@ export default function Auth() {
             <img src={neuroSuiteLogo} alt="NeuroSuite Logo" className="h-32 sm:h-40 md:h-48 w-auto" />
           </div>
           <CardDescription>
-            Detecção de estresse e coaching de alta performance
+            Stress detection and high performance coaching
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Cadastro</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -99,7 +99,7 @@ export default function Auth() {
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="seu@email.com"
+                    placeholder="your@email.com"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
@@ -107,7 +107,7 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="login-password" className="text-sm font-medium">
-                    Senha
+                    Password
                   </label>
                   <Input
                     id="login-password"
@@ -119,7 +119,7 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Entrando...' : 'Entrar'}
+                  {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
             </TabsContent>
@@ -128,29 +128,29 @@ export default function Auth() {
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="signup-name" className="text-sm font-medium">
-                    Nome completo
+                    Full name
                   </label>
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="Seu nome"
+                    placeholder="Your name"
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="signup-preferred-name" className="text-sm font-medium">
-                    Como prefere ser chamado(a)?
+                    What would you like to be called?
                   </label>
                   <Input
                     id="signup-preferred-name"
                     type="text"
-                    placeholder="Ex: João, Maria, Dr. Silva..."
+                    placeholder="e.g.: John, Mary, Dr. Smith..."
                     value={signupPreferredName}
                     onChange={(e) => setSignupPreferredName(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    O NeuroCoach usará este nome para conversar com você
+                    NeuroCoach will use this name to talk to you
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -160,7 +160,7 @@ export default function Auth() {
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="seu@email.com"
+                    placeholder="your@email.com"
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
@@ -168,7 +168,7 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="signup-password" className="text-sm font-medium">
-                    Senha
+                    Password
                   </label>
                   <Input
                     id="signup-password"
@@ -180,7 +180,7 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Cadastrando...' : 'Criar conta'}
+                  {isLoading ? 'Creating account...' : 'Create account'}
                 </Button>
               </form>
             </TabsContent>

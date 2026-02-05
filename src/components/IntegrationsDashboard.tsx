@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Video, MessageSquare, Users, Clock, AlertTriangle, 
+import {
+  Video, MessageSquare, Users, Clock, AlertTriangle,
   TrendingUp, Brain, Target, Zap, RefreshCw, Send,
   CheckCircle2, XCircle, Loader2, Calendar, ExternalLink
 } from 'lucide-react';
@@ -90,17 +90,17 @@ export default function IntegrationsDashboard() {
     },
   });
 
-  // Métricas agregadas
+  // Aggregated metrics
   const totalMeetingTime = Object.values(integrations).reduce((acc, i) => acc + i.meetingTime, 0);
   const totalMessages = Object.values(integrations).reduce((acc, i) => acc + i.messagesCount, 0);
   const connectedCount = Object.values(integrations).filter(i => i.connected).length;
 
-  // Calcular nível de sobrecarga
+  // Calculate overload level
   const getOverloadLevel = () => {
-    if (totalMeetingTime > 360) return { level: 'crítico', color: 'destructive', percent: 100 };
-    if (totalMeetingTime > 240) return { level: 'alto', color: 'warning', percent: 80 };
-    if (totalMeetingTime > 120) return { level: 'moderado', color: 'secondary', percent: 50 };
-    return { level: 'saudável', color: 'default', percent: 30 };
+    if (totalMeetingTime > 360) return { level: 'critical', color: 'destructive', percent: 100 };
+    if (totalMeetingTime > 240) return { level: 'high', color: 'warning', percent: 80 };
+    if (totalMeetingTime > 120) return { level: 'moderate', color: 'secondary', percent: 50 };
+    return { level: 'healthy', color: 'default', percent: 30 };
   };
 
   const overload = getOverloadLevel();
@@ -136,10 +136,10 @@ export default function IntegrationsDashboard() {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.success && event.data?.access_token) {
         setLoadingPlatform('meet');
-        
+
         try {
           const calendarData = await fetchGoogleCalendarData(event.data.access_token);
-          
+
           setIntegrations(prev => ({
             ...prev,
             meet: {
@@ -147,7 +147,7 @@ export default function IntegrationsDashboard() {
               status: 'online',
               meetingTime: calendarData.totalMinutes || 0,
               messagesCount: calendarData.totalMeetings || 0,
-              lastSync: new Date().toLocaleTimeString('pt-BR'),
+              lastSync: new Date().toLocaleTimeString('en-US'),
               accessToken: event.data.access_token,
               upcomingMeetings: calendarData.upcomingMeetings || [],
               isReal: true,
@@ -155,13 +155,13 @@ export default function IntegrationsDashboard() {
           }));
 
           toast({
-            title: 'Google Meet conectado!',
-            description: `${calendarData.totalMeetings} reuniões encontradas nos últimos 30 dias.`,
+            title: 'Google Meet connected!',
+            description: `${calendarData.totalMeetings} meetings found in the last 30 days.`,
           });
         } catch (error: any) {
           toast({
-            title: 'Erro ao buscar dados',
-            description: error.message || 'Não foi possível sincronizar o calendário.',
+            title: 'Error fetching data',
+            description: error.message || 'Could not sync calendar.',
             variant: 'destructive',
           });
         } finally {
@@ -169,7 +169,7 @@ export default function IntegrationsDashboard() {
         }
       } else if (event.data?.error) {
         toast({
-          title: 'Erro na autenticação',
+          title: 'Authentication error',
           description: event.data.error,
           variant: 'destructive',
         });
@@ -200,7 +200,7 @@ export default function IntegrationsDashboard() {
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
-      
+
       window.open(
         data.authUrl,
         'Google OAuth',
@@ -208,8 +208,8 @@ export default function IntegrationsDashboard() {
       );
     } catch (error: any) {
       toast({
-        title: 'Erro ao iniciar OAuth',
-        description: error.message || 'Configure as credenciais do Google primeiro.',
+        title: 'Error starting OAuth',
+        description: error.message || 'Configure Google credentials first.',
         variant: 'destructive',
       });
       setLoadingPlatform(null);
@@ -224,26 +224,26 @@ export default function IntegrationsDashboard() {
     setLoadingPlatform('meet');
     try {
       const calendarData = await fetchGoogleCalendarData(accessToken);
-      
+
       setIntegrations(prev => ({
         ...prev,
         meet: {
           ...prev.meet,
           meetingTime: calendarData.totalMinutes || 0,
           messagesCount: calendarData.totalMeetings || 0,
-          lastSync: new Date().toLocaleTimeString('pt-BR'),
+          lastSync: new Date().toLocaleTimeString('en-US'),
           upcomingMeetings: calendarData.upcomingMeetings || [],
         },
       }));
 
       toast({
-        title: 'Sincronizado!',
-        description: 'Dados do calendário atualizados.',
+        title: 'Synced!',
+        description: 'Calendar data updated.',
       });
     } catch (error: any) {
       toast({
-        title: 'Erro ao sincronizar',
-        description: 'Token expirado. Reconecte o Google Meet.',
+        title: 'Sync error',
+        description: 'Token expired. Reconnect Google Meet.',
         variant: 'destructive',
       });
       // Reset connection if token expired
@@ -259,10 +259,10 @@ export default function IntegrationsDashboard() {
   // Mock connection for other platforms (demo)
   const connectMockIntegration = async (platform: string) => {
     setLoadingPlatform(platform);
-    
+
     toast({
-      title: `Conectando ${getPlatformDisplayName(platform)}...`,
-      description: 'Modo demo - dados simulados',
+      title: `Connecting ${getPlatformDisplayName(platform)}...`,
+      description: 'Demo mode - simulated data',
     });
 
     setTimeout(() => {
@@ -273,14 +273,14 @@ export default function IntegrationsDashboard() {
           status: 'online',
           meetingTime: Math.floor(Math.random() * 180) + 30,
           messagesCount: Math.floor(Math.random() * 50) + 10,
-          lastSync: new Date().toLocaleTimeString('pt-BR'),
+          lastSync: new Date().toLocaleTimeString('en-US'),
           isReal: false,
         },
       }));
       setLoadingPlatform(null);
       toast({
-        title: `${getPlatformDisplayName(platform)} conectado!`,
-        description: 'Dados demo sincronizados.',
+        title: `${getPlatformDisplayName(platform)} connected!`,
+        description: 'Demo data synced.',
       });
     }, 1500);
   };
@@ -294,12 +294,12 @@ export default function IntegrationsDashboard() {
     }
   };
 
-  // Check-in IA pré/pós reunião
+  // AI pre/post meeting check-in
   const generateAICheckIn = async () => {
     if (!checkInData.purpose && checkInType === 'pre') {
       toast({
-        title: 'Campo obrigatório',
-        description: 'Informe o propósito da reunião',
+        title: 'Required field',
+        description: 'Enter the meeting purpose',
         variant: 'destructive',
       });
       return;
@@ -309,24 +309,24 @@ export default function IntegrationsDashboard() {
     setAiResponse('');
 
     try {
-      const prompt = checkInType === 'pre' 
-        ? `Você é um coach de alta performance com PNL. O usuário vai entrar em uma reunião com:
-Propósito: ${checkInData.purpose}
-Objetivos: ${checkInData.objectives}
-Expectativas: ${checkInData.expectations}
+      const prompt = checkInType === 'pre'
+        ? `You are a high performance coach with NLP expertise. The user is about to enter a meeting with:
+Purpose: ${checkInData.purpose}
+Objectives: ${checkInData.objectives}
+Expectations: ${checkInData.expectations}
 
-Faça 3 perguntas poderosas (PNL) para alinhar mindset antes da reunião. Seja conciso e motivador.`
-        : `Você é um coach de alta performance com PNL. O usuário acabou uma reunião:
-Propósito original: ${checkInData.purpose}
-Feedback: ${checkInData.feedback || 'Não informado'}
+Ask 3 powerful questions (NLP) to align mindset before the meeting. Be concise and motivating.`
+        : `You are a high performance coach with NLP expertise. The user just finished a meeting:
+Original purpose: ${checkInData.purpose}
+Feedback: ${checkInData.feedback || 'Not provided'}
 
-Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma ancoragem positiva. Máximo 3 parágrafos.`;
+Give constructive NLP-based feedback: what went well, what to improve, and a positive anchor. Maximum 3 paragraphs.`;
 
       const { data, error } = await supabase.functions.invoke('neuro-coach', {
         body: {
           messages: [{ role: 'user', content: prompt }],
           stressLevel: overload.level,
-          context: `Integrations: ${connectedCount} conectadas. Tempo em reunião hoje: ${totalMeetingTime}min.`,
+          context: `Integrations: ${connectedCount} connected. Meeting time today: ${totalMeetingTime}min.`,
           userName: '',
           communicationTone: 'casual',
         },
@@ -335,10 +335,10 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
       if (error) throw error;
       setAiResponse(data.response);
     } catch (error: any) {
-      console.error('Erro IA:', error);
+      console.error('AI Error:', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível gerar feedback. Tente novamente.',
+        title: 'Error',
+        description: 'Could not generate feedback. Try again.',
         variant: 'destructive',
       });
     } finally {
@@ -377,16 +377,16 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
 
   return (
     <div className="space-y-6">
-      {/* Header com métricas */}
+      {/* Header with metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
-              <span className="text-sm text-muted-foreground">Tempo em Calls</span>
+              <span className="text-sm text-muted-foreground">Call Time</span>
             </div>
             <p className="text-2xl font-bold mt-1">{totalMeetingTime} min</p>
-            <p className="text-xs text-muted-foreground">hoje</p>
+            <p className="text-xs text-muted-foreground">today</p>
           </CardContent>
         </Card>
 
@@ -394,10 +394,10 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-secondary" />
-              <span className="text-sm text-muted-foreground">Mensagens</span>
+              <span className="text-sm text-muted-foreground">Messages</span>
             </div>
             <p className="text-2xl font-bold mt-1">{totalMessages}</p>
-            <p className="text-xs text-muted-foreground">enviadas hoje</p>
+            <p className="text-xs text-muted-foreground">sent today</p>
           </CardContent>
         </Card>
 
@@ -405,18 +405,18 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-accent" />
-              <span className="text-sm text-muted-foreground">Integrações</span>
+              <span className="text-sm text-muted-foreground">Integrations</span>
             </div>
             <p className="text-2xl font-bold mt-1">{connectedCount}/4</p>
-            <p className="text-xs text-muted-foreground">conectadas</p>
+            <p className="text-xs text-muted-foreground">connected</p>
           </CardContent>
         </Card>
 
-        <Card className={`bg-gradient-to-br ${overload.level === 'crítico' ? 'from-destructive/20 to-destructive/10' : overload.level === 'alto' ? 'from-yellow-500/20 to-yellow-500/10' : 'from-green-500/20 to-green-500/10'}`}>
+        <Card className={`bg-gradient-to-br ${overload.level === 'critical' ? 'from-destructive/20 to-destructive/10' : overload.level === 'high' ? 'from-yellow-500/20 to-yellow-500/10' : 'from-green-500/20 to-green-500/10'}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className={`h-5 w-5 ${overload.level === 'crítico' ? 'text-destructive' : overload.level === 'alto' ? 'text-yellow-500' : 'text-green-500'}`} />
-              <span className="text-sm text-muted-foreground">Sobrecarga</span>
+              <AlertTriangle className={`h-5 w-5 ${overload.level === 'critical' ? 'text-destructive' : overload.level === 'high' ? 'text-yellow-500' : 'text-green-500'}`} />
+              <span className="text-sm text-muted-foreground">Overload</span>
             </div>
             <p className="text-2xl font-bold mt-1 capitalize">{overload.level}</p>
             <Progress value={overload.percent} className="h-1 mt-2" />
@@ -426,8 +426,8 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Integrações</TabsTrigger>
-          <TabsTrigger value="checkin">Check-in IA</TabsTrigger>
+          <TabsTrigger value="overview">Integrations</TabsTrigger>
+          <TabsTrigger value="checkin">AI Check-in</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
@@ -459,20 +459,20 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                         </div>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Tempo em call</span>
+                        <span className="text-muted-foreground">Call time</span>
                         <span className="font-medium">{data.meetingTime} min</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Mensagens</span>
+                        <span className="text-muted-foreground">Messages</span>
                         <span className="font-medium">{data.messagesCount}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Última sync</span>
+                        <span className="text-muted-foreground">Last sync</span>
                         <span className="text-xs">{data.lastSync}</span>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="w-full mt-2"
                         onClick={() => platform === 'meet' && integrations.meet.accessToken ? syncGoogleMeet() : connectIntegration(platform)}
                         disabled={loadingPlatform === platform}
@@ -482,15 +482,15 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                         ) : (
                           <RefreshCw className="h-3 w-3 mr-1" />
                         )}
-                        Sincronizar
+                        Sync
                       </Button>
                     </div>
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-sm text-muted-foreground mb-3">
-                        {platform === 'meet' ? 'Conecte com OAuth real' : 'Conecte para monitorar (demo)'}
+                        {platform === 'meet' ? 'Connect with real OAuth' : 'Connect to monitor (demo)'}
                       </p>
-                      <Button 
+                      <Button
                         onClick={() => connectIntegration(platform)}
                         disabled={loadingPlatform === platform}
                         className="w-full"
@@ -498,7 +498,7 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                         {loadingPlatform === platform ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        Conectar {getPlatformDisplayName(platform)}
+                        Connect {getPlatformDisplayName(platform)}
                       </Button>
                     </div>
                   )}
@@ -507,15 +507,15 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
             ))}
           </div>
 
-          {/* Próximas Reuniões - Google Meet */}
+          {/* Upcoming Meetings - Google Meet */}
           {integrations.meet.connected && integrations.meet.upcomingMeetings && integrations.meet.upcomingMeetings.length > 0 && (
             <Card className="mt-4">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
-                  Próximas Reuniões
+                  Upcoming Meetings
                 </CardTitle>
-                <CardDescription>Clique para entrar direto no Google Meet</CardDescription>
+                <CardDescription>Click to join directly in Google Meet</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -523,32 +523,32 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                     const startDate = new Date(meeting.start);
                     const endDate = new Date(meeting.end);
                     const isToday = startDate.toDateString() === new Date().toDateString();
-                    
+
                     return (
-                      <div 
-                        key={meeting.id} 
+                      <div
+                        key={meeting.id}
                         className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                       >
                         <div className="flex-1">
                           <p className="font-medium text-sm">{meeting.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {isToday ? 'Hoje' : startDate.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            {isToday ? 'Today' : startDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })} • {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                           {meeting.attendees > 0 && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3" /> {meeting.attendees} participantes
+                              <Users className="h-3 w-3" /> {meeting.attendees} attendees
                             </p>
                           )}
                         </div>
                         {meeting.meetLink && (
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="default"
                             onClick={() => window.open(meeting.meetLink, '_blank')}
                             className="gap-2"
                           >
                             <Video className="h-4 w-4" />
-                            Entrar
+                            Join
                             <ExternalLink className="h-3 w-3" />
                           </Button>
                         )}
@@ -566,10 +566,10 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-primary" />
-                Check-in de Reunião com IA
+                AI Meeting Check-in
               </CardTitle>
               <CardDescription>
-                Feedback baseado em PNL antes e depois das reuniões
+                NLP-based feedback before and after meetings
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -583,7 +583,7 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                   className="flex-1"
                 >
                   <Target className="h-4 w-4 mr-2" />
-                  Pré-Reunião
+                  Pre-Meeting
                 </Button>
                 <Button
                   variant={checkInType === 'post' ? 'default' : 'outline'}
@@ -594,15 +594,15 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                   className="flex-1"
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Pós-Reunião
+                  Post-Meeting
                 </Button>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium">Propósito da reunião</label>
+                  <label className="text-sm font-medium">Meeting purpose</label>
                   <Textarea
-                    placeholder="Ex: Alinhamento de projeto, feedback trimestral..."
+                    placeholder="E.g.: Project alignment, quarterly feedback..."
                     value={checkInData.purpose}
                     onChange={(e) => setCheckInData(prev => ({ ...prev, purpose: e.target.value }))}
                     className="mt-1"
@@ -612,18 +612,18 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                 {checkInType === 'pre' ? (
                   <>
                     <div>
-                      <label className="text-sm font-medium">Seus objetivos</label>
+                      <label className="text-sm font-medium">Your objectives</label>
                       <Textarea
-                        placeholder="O que você quer alcançar nessa reunião?"
+                        placeholder="What do you want to achieve in this meeting?"
                         value={checkInData.objectives}
                         onChange={(e) => setCheckInData(prev => ({ ...prev, objectives: e.target.value }))}
                         className="mt-1"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Expectativas</label>
+                      <label className="text-sm font-medium">Expectations</label>
                       <Textarea
-                        placeholder="Qual resultado ideal?"
+                        placeholder="What's the ideal outcome?"
                         value={checkInData.expectations}
                         onChange={(e) => setCheckInData(prev => ({ ...prev, expectations: e.target.value }))}
                         className="mt-1"
@@ -632,9 +632,9 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                   </>
                 ) : (
                   <div>
-                    <label className="text-sm font-medium">Como foi a reunião?</label>
+                    <label className="text-sm font-medium">How was the meeting?</label>
                     <Textarea
-                      placeholder="Descreva brevemente o que aconteceu, sentimentos, resultados..."
+                      placeholder="Briefly describe what happened, feelings, results..."
                       value={checkInData.feedback || ''}
                       onChange={(e) => setCheckInData(prev => ({ ...prev, feedback: e.target.value }))}
                       className="mt-1"
@@ -643,20 +643,20 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                   </div>
                 )}
 
-                <Button 
-                  onClick={generateAICheckIn} 
+                <Button
+                  onClick={generateAICheckIn}
                   disabled={isGenerating}
                   className="w-full"
                 >
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Gerando feedback...
+                      Generating feedback...
                     </>
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      {checkInType === 'pre' ? 'Preparar Mindset' : 'Obter Feedback'}
+                      {checkInType === 'pre' ? 'Prepare Mindset' : 'Get Feedback'}
                     </>
                   )}
                 </Button>
@@ -665,7 +665,7 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                   <div className="p-4 bg-muted/50 rounded-lg border mt-4">
                     <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
                       <Brain className="h-4 w-4 text-primary" />
-                      NeuroCoach diz:
+                      NeuroCoach says:
                     </h4>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{aiResponse}</p>
                   </div>
@@ -680,36 +680,36 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Insights de Produtividade
+                Productivity Insights
               </CardTitle>
               <CardDescription>
-                Análise baseada nos dados das integrações
+                Analysis based on integration data
               </CardDescription>
             </CardHeader>
             <CardContent>
               {connectedCount === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">
-                    Conecte pelo menos uma integração para ver insights
+                    Connect at least one integration to see insights
                   </p>
                   <Button variant="outline" onClick={() => setActiveTab('overview')}>
-                    Conectar Integrações
+                    Connect Integrations
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Alertas preventivos */}
+                  {/* Preventive alerts */}
                   {totalMeetingTime > 240 && (
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
                         <div>
                           <h4 className="font-semibold text-yellow-700 dark:text-yellow-400">
-                            Alerta: Excesso de reuniões
+                            Alert: Too many meetings
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Você já está em {totalMeetingTime} minutos de calls hoje. 
-                            Considere bloquear tempo para trabalho focado.
+                            You've already spent {totalMeetingTime} minutes in calls today.
+                            Consider blocking time for focused work.
                           </p>
                         </div>
                       </div>
@@ -722,43 +722,43 @@ Dê um feedback construtivo baseado em PNL: o que foi bem, o que melhorar, e uma
                         <MessageSquare className="h-5 w-5 text-blue-500 mt-0.5" />
                         <div>
                           <h4 className="font-semibold text-blue-700 dark:text-blue-400">
-                            Alto volume de comunicação
+                            High communication volume
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {totalMessages} mensagens hoje. Considere agrupar respostas 
-                            em horários específicos para maior produtividade.
+                            {totalMessages} messages today. Consider batching responses
+                            at specific times for better productivity.
                           </p>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Métricas positivas */}
+                  {/* Positive metrics */}
                   {totalMeetingTime < 120 && connectedCount > 0 && (
                     <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
                         <div>
                           <h4 className="font-semibold text-green-700 dark:text-green-400">
-                            Bom equilíbrio hoje!
+                            Good balance today!
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Tempo em reuniões saudável. Continue assim para manter 
-                            produtividade e bem-estar.
+                            Healthy meeting time. Keep it up to maintain
+                            productivity and well-being.
                           </p>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Resumo de indicadores */}
+                  {/* Indicator summary */}
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Tempo focado estimado</p>
+                      <p className="text-xs text-muted-foreground">Estimated focus time</p>
                       <p className="text-xl font-bold">{Math.max(0, 480 - totalMeetingTime)} min</p>
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Interrupções estimadas</p>
+                      <p className="text-xs text-muted-foreground">Estimated interruptions</p>
                       <p className="text-xl font-bold">{Math.floor(totalMessages / 5)}</p>
                     </div>
                   </div>
