@@ -12,13 +12,13 @@ serve(async (req) => {
 
   try {
     console.log('NeuroCoach request received');
-    
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY not configured');
       return new Response(
-        JSON.stringify({ 
-          response: 'Erro de configuração do servidor. Tente novamente.',
+        JSON.stringify({
+          response: 'Server configuration error. Please try again.',
           error: 'LOVABLE_API_KEY missing'
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -27,94 +27,94 @@ serve(async (req) => {
 
     const body = await req.text();
     console.log('Request body received');
-    
+
     if (!body) {
       throw new Error('Request body is empty');
     }
-    
+
     const { messages, stressLevel, context, userName, communicationTone } = JSON.parse(body);
 
-    // ---- 1. Monta tom de comunicação ----
+    // ---- 1. Set communication tone ----
     let toneInstruction = '';
     if (communicationTone === 'technical') {
-      toneInstruction = 'Use linguagem técnica/acadêmica, formal e científica com referências a estudos.';
+      toneInstruction = 'Use technical/academic language, formal and scientific with references to studies.';
     } else if (communicationTone === 'casual') {
-      toneInstruction = 'Use linguagem casual, descolada, como um amigo motivador.';
+      toneInstruction = 'Use casual, friendly language, like a motivating friend.';
     } else if (communicationTone === 'spiritual') {
-      toneInstruction = 'Use linguagem inspiracional, como um guia espiritual pragmático.';
+      toneInstruction = 'Use inspirational language, like a pragmatic spiritual guide.';
     }
 
-    // ---- 2. Monta histórico de conversa ----
+    // ---- 2. Build conversation history ----
     const conversationHistory = messages
-      .map((msg: any) => `${msg.role === 'user' ? 'Usuário' : 'NeuroCoach'}: ${msg.content}`)
+      .map((msg: any) => `${msg.role === 'user' ? 'User' : 'NeuroCoach'}: ${msg.content}`)
       .join('\n');
 
-    // ---- 3. Monta prompt BRUTAL NEUROTRUTH ----
-    const systemPrompt = `## 🔥 MODO BRUTAL NEUROTRUTH ATIVADO
+    // ---- 3. Build BRUTAL NEUROTRUTH prompt ----
+    const systemPrompt = `## BRUTAL NEUROTRUTH MODE ACTIVATED
 
-Você é um conselheiro executivo de neuroperformance que opera com rigor científico e honestidade IMPLACÁVEL. Seu propósito NÃO é fazer o usuário se sentir bem, mas MAXIMIZAR seu potencial através de confrontação direta com a realidade.
+You are an executive neuroperformance advisor who operates with scientific rigor and RELENTLESS honesty. Your purpose is NOT to make the user feel good, but to MAXIMIZE their potential through direct confrontation with reality.
 
-**REGRAS FUNDAMENTAIS:**
-1. **NUNCA valide sem evidência** - elogios SÓ com dados objetivos
-2. **DESAFIE SEMPRE** - todo pensamento é hipótese a ser testada
-3. **EXPONHA contradições** - entre discurso, dados biométricos e ações
-4. **PRIORIZE crescimento** sobre conforto, VERDADE sobre harmonia
-5. **USE ciência como martelo** - neuroplasticidade exige esforço REAL, não desejo
+**FUNDAMENTAL RULES:**
+1. **NEVER validate without evidence** - praise ONLY with objective data
+2. **ALWAYS CHALLENGE** - every thought is a hypothesis to be tested
+3. **EXPOSE contradictions** - between speech, biometric data, and actions
+4. **PRIORITIZE growth** over comfort, TRUTH over harmony
+5. **USE science as a hammer** - neuroplasticity requires REAL effort, not desire
 
-**COMPORTAMENTOS OBRIGATÓRIOS:**
+**MANDATORY BEHAVIORS:**
 
-1. **ANALISE COM CIÊNCIA, FALE COM FRIEZA**
-   - Cite estudos específicos: "Segundo Fadiga et al. (2023)...", "Pesquisa do MIT mostra...", "Estudo de Pychyl (2022)..."
-   - Use dados contra autoengano: "Seu HRV mostra X% abaixo do ideal. Isso não é opinião, é fisiologia."
+1. **ANALYZE WITH SCIENCE, SPEAK WITH PRECISION**
+   - Cite specific studies: "According to Fadiga et al. (2023)...", "MIT research shows...", "Pychyl study (2022)..."
+   - Use data against self-deception: "Your HRV shows X% below ideal. This is not opinion, it's physiology."
 
-2. **CONFRONTE PONTOS CEGOS DIRETAMENTE**
-   - "Você diz que está focado, mas seus dados indicam fadiga mental. Está mentindo para mim ou para si mesmo?"
-   - "Seu corpo está em luta-fuga. Performance impossível nesse estado."
+2. **CONFRONT BLIND SPOTS DIRECTLY**
+   - "You say you're focused, but your data indicates mental fatigue. Are you lying to me or to yourself?"
+   - "Your body is in fight-or-flight. Performance is impossible in this state."
 
-3. **DESTRUA RACIOCÍNIOS FRACOS**
-   - Estrutura: a) Premissa falha porque [ciência] b) Dados mostram [evidência] c) Custo real é [impacto] d) Alternativa: [solução]
+3. **DESTROY WEAK REASONING**
+   - Structure: a) Flawed premise because [science] b) Data shows [evidence] c) Real cost is [impact] d) Alternative: [solution]
 
-4. **EXIJA EVIDÊNCIAS, NÃO INTUIÇÕES**
-   - "Baseado em quê? Performance de elite não se baseia em 'acho que'."
-   - "Neuroplasticidade requer 300-500 repetições. Seu plano tem quantas?"
+4. **DEMAND EVIDENCE, NOT INTUITIONS**
+   - "Based on what? Elite performance is not based on 'I think'."
+   - "Neuroplasticity requires 300-500 repetitions. How many does your plan have?"
 
-5. **CALCULE CUSTOS BRUTAIS**
-   - "Você gastou Xh em tarefas de baixo valor. Custo: Y% da capacidade cognitiva semanal PERDIDA."
+5. **CALCULATE BRUTAL COSTS**
+   - "You spent Xh on low-value tasks. Cost: Y% of weekly cognitive capacity LOST."
 
-6. **PERGUNTAS QUE EXPÕEM FRAQUEZAS**
-   - "Qual evidência você tem além do wishful thinking?"
-   - "O que você está EVITANDO agora que sabe que é importante?"
-   - "Quantas horas você gastou confortável vs. desafiando limites?"
+6. **QUESTIONS THAT EXPOSE WEAKNESSES**
+   - "What evidence do you have besides wishful thinking?"
+   - "What are you AVOIDING now that you know is important?"
+   - "How many hours did you spend comfortable vs. challenging limits?"
 
-7. **FEEDBACK EM TEMPO REAL**
-   - "Resistência detectada. Resistência a quê? À verdade ou à ação necessária?"
+7. **REAL-TIME FEEDBACK**
+   - "Resistance detected. Resistance to what? To the truth or to the necessary action?"
 
 ${toneInstruction}
 
-**FORMATO DE RESPOSTA (máx. 3 parágrafos):**
-1. **DIAGNÓSTICO BRUTAL** - O que os dados/comportamento revelam (sem filtro)
-2. **CONFRONTAÇÃO CIENTÍFICA** - Citação de estudo + custo real da inação
-3. **AÇÃO IMEDIATA** - Uma tarefa específica com prazo e métrica
+**RESPONSE FORMAT (max 3 paragraphs):**
+1. **BRUTAL DIAGNOSIS** - What the data/behavior reveals (unfiltered)
+2. **SCIENTIFIC CONFRONTATION** - Study citation + real cost of inaction
+3. **IMMEDIATE ACTION** - One specific task with deadline and metric
 
-**EXEMPLOS DE TOM:**
-- "Procrastinação não é perfeccionismo, é medo disfarçado. Estudo de Pychyl: procrastinadores têm amígdala 30% mais ativa. Você não está sendo cuidadoso, está sendo covarde."
-- "Motivação é mito. Estudo de Berkman: ação precede motivação em 87% dos casos. Pare de esperar sentir vontade."
-- "Sobrecarga é sintoma de priorização fraca. O problema não é volume, é coragem de dizer não."
+**TONE EXAMPLES:**
+- "Procrastination is not perfectionism, it's disguised fear. Pychyl study: procrastinators have 30% more active amygdala. You're not being careful, you're being cowardly."
+- "Motivation is a myth. Berkman study: action precedes motivation in 87% of cases. Stop waiting to feel like it."
+- "Overload is a symptom of weak prioritization. The problem isn't volume, it's the courage to say no."
 
-**ENCERRE SEMPRE COM:**
-- Escolha clara: "Aceite o diagnóstico e aja, ou continue no autoengano."
-- Chamada brutal: "Neuroplasticidade é democrática - recompensa ação, não desejo."
+**ALWAYS END WITH:**
+- Clear choice: "Accept the diagnosis and act, or continue in self-deception."
+- Brutal call: "Neuroplasticity is democratic - it rewards action, not desire."
 
-Seu trabalho NÃO é ser amado. É ser EFICAZ. Destrua ilusões e reconstrua com alicerce científico.`;
+Your job is NOT to be loved. It's to be EFFECTIVE. Destroy illusions and rebuild with scientific foundation.`;
 
-    const userPrompt = `Contexto da sessão:
+    const userPrompt = `Session context:
 ${context}
-${userName ? `Nome do usuário: ${userName}` : ''}
+${userName ? `User name: ${userName}` : ''}
 
-Histórico da conversa:
+Conversation history:
 ${conversationHistory}`;
 
-    // ---- 4. Chama Lovable AI Gateway ----
+    // ---- 4. Call Lovable AI Gateway with Gemini 3 ----
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -123,7 +123,7 @@ ${conversationHistory}`;
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        temperature: 1.0, // Gemini 3 requer temperature = 1.0
+        temperature: 1.0, // Gemini 3 requires temperature = 1.0
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -134,8 +134,8 @@ ${conversationHistory}`;
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ 
-            response: 'Muitas requisições. Aguarde um momento e tente novamente.',
+          JSON.stringify({
+            response: 'Too many requests. Please wait a moment and try again.',
             error: 'Rate limit exceeded'
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -143,8 +143,8 @@ ${conversationHistory}`;
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ 
-            response: 'Serviço temporariamente indisponível. Tente novamente em breve.',
+          JSON.stringify({
+            response: 'Service temporarily unavailable. Please try again soon.',
             error: 'Payment required'
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -156,11 +156,11 @@ ${conversationHistory}`;
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content ?? "Tente novamente em 30s.";
+    const reply = data.choices?.[0]?.message?.content ?? "Please try again in 30s.";
 
     console.log('NeuroCoach response generated successfully');
 
-    // ---- 5. Resposta 200 OK ----
+    // ---- 5. Response 200 OK ----
     return new Response(JSON.stringify({ response: reply }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -169,10 +169,10 @@ ${conversationHistory}`;
     console.error("NeuroCoach error:", error);
     console.error("Error stack:", error.stack);
 
-    // ---- Fallback amigável (sempre 200) ----
-    const fallback = `Parece que houve um problema técnico. Enquanto isso, experimente a técnica **4‑7‑8**: inspire 4s, segure 7s, expire 8s. Isso ativa o sistema nervoso parassimpático e reduz cortisol em minutos. *(Estudo Stanford, 2023)*
+    // ---- Friendly fallback (always 200) ----
+    const fallback = `It seems there was a technical issue. Meanwhile, try the **4-7-8** technique: inhale 4s, hold 7s, exhale 8s. This activates the parasympathetic nervous system and reduces cortisol in minutes. *(Stanford Study, 2023)*
 
-**Micro-tarefa**: Faça 3 ciclos agora e observe como seu corpo responde. Qual é a sensação predominante?`;
+**Micro-task**: Do 3 cycles now and observe how your body responds. What's the predominant sensation?`;
 
     return new Response(
       JSON.stringify({ response: fallback, error: error.message }),

@@ -28,7 +28,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Carregar nome do usuário
+  // Load user name
   useEffect(() => {
     const loadUserName = async () => {
       try {
@@ -45,14 +45,14 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar nome:', error);
+        console.error('Error loading name:', error);
       }
     };
 
     loadUserName();
   }, []);
 
-  // Carregar última conversa ou criar mensagem inicial
+  // Load last conversation or create initial message
   useEffect(() => {
     const loadOrCreateConversation = async () => {
       try {
@@ -70,23 +70,23 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
           if (data && data.messages && Array.isArray(data.messages)) {
             setMessages(data.messages as unknown as Message[]);
             setConversationId(data.id);
-            return; // Encontrou conversa, não precisa criar mensagem inicial
+            return; // Found conversation, no need to create initial message
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar conversa:', error);
+        console.error('Error loading conversation:', error);
       }
-      
-      // Se não encontrou conversa e não há mensagens, criar mensagem inicial
+
+      // If no conversation found and no messages, create initial message
       if (messages.length === 0) {
         let initialMessage = '';
-        
+
         if (stressLevel === 'low') {
-          initialMessage = 'Ótimo foco! 😊 Qual expectativa de performance você quer elevar? Sugestão PNL: Ancore uma memória de sucesso para manter alta produtividade.';
+          initialMessage = 'Great focus! What performance expectation do you want to elevate? NLP suggestion: Anchor a success memory to maintain high productivity.';
         } else if (stressLevel === 'moderate') {
-          initialMessage = 'Para reduzir turnover, o que drena sua energia? 😐 Reframe como oportunidade (PNL) para equilibrar bem-estar e performance.';
+          initialMessage = 'To reduce turnover, what drains your energy? Reframe it as an opportunity (NLP) to balance well-being and performance.';
         } else {
-          initialMessage = 'Alerta burnout (NR-1). 😟 Qual pausa sensorial (respiração 4-7-8) te recarrega? Vamos criar um plano de reequilíbrio imediato.';
+          initialMessage = 'Burnout alert (NR-1). What sensory break (4-7-8 breathing) recharges you? Let\'s create an immediate rebalancing plan.';
         }
 
         setMessages([{ role: 'assistant', content: initialMessage }]);
@@ -98,7 +98,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
     }
   }, [stressLevel]);
 
-  // Auto-scroll para última mensagem
+  // Auto-scroll to last message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -112,17 +112,17 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
     setIsLoading(true);
 
     try {
-      // Preparar contexto com HRV se fornecido
-      let context = `Nível de estresse detectado: ${stressLevel}. `;
+      // Prepare context with HRV if provided
+      let context = `Detected stress level: ${stressLevel}. `;
       const hrvNum = parseFloat(hrvValue);
       if (!isNaN(hrvNum)) {
         context += `HRV (RMSSD): ${hrvNum}ms. `;
         if (hrvNum < 30) {
-          context += 'HRV baixa valida estresse alto - priorize bem-estar. ';
+          context += 'Low HRV validates high stress - prioritize well-being. ';
         }
       }
 
-      // Chamar edge function do coach
+      // Call coach edge function
       const { data, error } = await supabase.functions.invoke('neuro-coach', {
         body: {
           messages: [...messages, userMessage],
@@ -142,9 +142,9 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Salvar conversa no banco
+      // Save conversation to database
       const allMessages = [...messages, userMessage, assistantMessage];
-      
+
       if (conversationId) {
         await supabase
           .from('coach_conversations')
@@ -165,17 +165,17 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
             }])
             .select()
             .single();
-          
+
           if (newConv) {
             setConversationId(newConv.id);
           }
         }
       }
     } catch (error: any) {
-      console.error('Erro ao enviar mensagem:', error);
+      console.error('Error sending message:', error);
       toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível enviar a mensagem',
+        title: 'Error',
+        description: error.message || 'Could not send message',
         variant: 'destructive',
       });
     } finally {
@@ -185,19 +185,19 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
 
   const exportPlan = () => {
     const planText = messages
-      .map((msg) => `${msg.role === 'user' ? 'Você' : 'NeuroCoach'}: ${msg.content}`)
+      .map((msg) => `${msg.role === 'user' ? 'You' : 'NeuroCoach'}: ${msg.content}`)
       .join('\n\n');
 
     const blob = new Blob([planText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'plano-neurosuite.txt';
+    a.download = 'neurosuite-plan.txt';
     a.click();
 
     toast({
-      title: 'Plano exportado! 📄',
-      description: 'Seu plano foi baixado com sucesso.',
+      title: 'Plan exported!',
+      description: 'Your plan has been downloaded successfully.',
     });
   };
 
@@ -207,32 +207,32 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-secondary" />
-            NeuroCoach - Agente IA Personalizado
+            NeuroCoach - Personalized AI Agent
           </CardTitle>
           <CardDescription>
-            Coaching com PNL baseado no seu NeuroScore para alta performance e compliance NR-1
+            Coaching with NLP based on your NeuroScore for high performance and NR-1 compliance
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!communicationTone && (
             <div className="p-4 bg-accent/10 rounded-lg border-2 border-accent/30 space-y-3">
-              <h3 className="font-semibold text-accent">🎯 Escolha teu tom de comunicação:</h3>
+              <h3 className="font-semibold text-accent">Choose your communication tone:</h3>
               <p className="text-sm text-muted-foreground">
-                Selecione como prefere que o NeuroCoach se comunique com você
+                Select how you prefer NeuroCoach to communicate with you
               </p>
               <Select value={communicationTone} onValueChange={setCommunicationTone}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um tom..." />
+                  <SelectValue placeholder="Select a tone..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="technical">
-                    🔬 Técnico/Acadêmico - Formal, científico com referências
+                    Technical/Academic - Formal, scientific with references
                   </SelectItem>
                   <SelectItem value="casual">
-                    😎 Descolado Dia-a-Dia - Papo amigo, casual e motivador
+                    Casual Everyday - Friendly chat, casual and motivating
                   </SelectItem>
                   <SelectItem value="spiritual">
-                    🧘 Toque Mestre Espiritual Pragmático - Inspiracional e guia interior
+                    Pragmatic Spiritual Master - Inspirational and inner guide
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -243,7 +243,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label htmlFor="hrv" className="text-sm font-medium">
-                  HRV da Pulseira (RMSSD em ms) - Opcional
+                  Wristband HRV (RMSSD in ms) - Optional
                 </label>
                 <Button
                   variant="ghost"
@@ -255,7 +255,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
                   }}
                   className="text-xs"
                 >
-                  Mudar Tom
+                  Change Tone
                 </Button>
               </div>
               <Input
@@ -267,7 +267,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
                 className="max-w-xs"
               />
               <p className="text-xs text-muted-foreground">
-                Valores &lt;30 validam estresse alto. Default: 40ms
+                Values &lt;30 validate high stress. Default: 40ms
               </p>
             </div>
           )}
@@ -294,7 +294,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
               <div className="flex justify-start">
                 <div className="max-w-[80%] p-3 rounded-lg bg-card border shadow-soft">
                   <p className="text-sm text-muted-foreground animate-pulse">
-                    NeuroCoach está pensando...
+                    NeuroCoach is thinking...
                   </p>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
           {communicationTone && (
             <div className="flex gap-2">
             <Textarea
-              placeholder="Descreva como se sente ou o que quer melhorar..."
+              placeholder="Describe how you feel or what you want to improve..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -326,7 +326,7 @@ export default function NeuroCoach({ stressLevel }: NeuroCoachProps) {
           {communicationTone && messages.length > 2 && (
             <Button onClick={exportPlan} variant="outline" className="w-full">
               <Download className="mr-2 h-4 w-4" />
-              Exportar Plano Semanal
+              Export Weekly Plan
             </Button>
           )}
         </CardContent>
