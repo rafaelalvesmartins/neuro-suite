@@ -4,7 +4,7 @@
 ## 🎯 The Problem
 - **70% of professionals** suffer from chronic stress globally.
 - Companies are **reactive**: they only detect burnout *after* the employee crashes.
-- Current tools rely on subjective self-reporting (surveys), which are often inaccurate.   
+- Current tools rely on subjective self-reporting (surveys), which are often inaccurate.    
 
 ## 💡 The Solution
 NeuroHealth monitors non-invasive vital signs via webcam in real-time:
