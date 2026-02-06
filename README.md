@@ -1,6 +1,6 @@
  # 🧠 NeuroHealth - AI Stress Detection Platform
 > A proactive mental health platform combining Neuroscience and Multimodal AI to prevent corporate burnout.
- 
+  
 ## 🎯 The Problem
 - **70% of professionals** suffer from chronic stress globally.
 - Companies are **reactive**: they only detect burnout *after* the employee crashes.
