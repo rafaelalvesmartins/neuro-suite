@@ -57,14 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       toast({
-        title: 'Erro no cadastro',
+        title: 'Sign up error',
         description: error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Cadastro realizado! 🎉',
-        description: 'Você já pode fazer login.',
+        title: 'Account created!',
+        description: 'You can now sign in.',
       });
     }
 
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       toast({
-        title: 'Erro no login',
+        title: 'Sign in error',
         description: error.message,
         variant: 'destructive',
       });
@@ -91,8 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     toast({
-      title: 'Logout realizado',
-      description: 'Até logo! 👋',
+      title: 'Signed out',
+      description: 'See you later!',
     });
   };
 

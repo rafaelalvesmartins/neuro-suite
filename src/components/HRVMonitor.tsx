@@ -17,7 +17,7 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
   const greenValuesRef = useRef<number[]>([]);
   const scanStartRef = useRef<number>(0);
 
-  // rPPG otimizado: Captura robusta mesmo em movimento
+  // Optimized rPPG: Robust capture even with movement
   const extractGreenChannel = () => {
     if (!videoRef.current || !canvasRef.current || !isScanning) return;
 
@@ -27,13 +27,13 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
 
     if (!ctx || video.readyState !== 4) return;
 
-    // Região de interesse: testa e bochechas (melhor cobertura para ângulos)
+    // Region of interest: forehead and cheeks (better coverage for angles)
     const width = 80;
     const height = 80;
     canvas.width = width;
     canvas.height = height;
 
-    // Capturar múltiplas regiões para robustez
+    // Capture multiple regions for robustness
     try {
       ctx.drawImage(
         video,
@@ -50,15 +50,15 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
       const imageData = ctx.getImageData(0, 0, width, height);
       const pixels = imageData.data;
 
-      // Extrair média do canal verde com filtro de ruído
+      // Extract green channel average with noise filter
       let greenSum = 0;
       let validPixels = 0;
       for (let i = 0; i < pixels.length; i += 4) {
         const r = pixels[i];
         const g = pixels[i + 1];
         const b = pixels[i + 2];
-        
-        // Filtrar pixels de pele (heurística simples)
+
+        // Filter skin pixels (simple heuristic)
         if (r > 60 && g > 40 && b > 20 && r > g && r > b) {
           greenSum += g;
           validPixels++;
@@ -89,21 +89,21 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
           if (lastPeakTimeRef.current > 0) {
             const rrInterval = now - lastPeakTimeRef.current;
             
-            // Filtrar RR intervals fisiologicamente plausíveis (40-200 bpm)
+            // Filter physiologically plausible RR intervals (40-200 bpm)
             if (rrInterval >= 300 && rrInterval <= 1500) {
               rrIntervalsRef.current.push(rrInterval);
 
-              // Manter últimos 30 RR intervals para HRV mais preciso
+              // Keep last 30 RR intervals for more accurate HRV
               if (rrIntervalsRef.current.length > 30) {
                 rrIntervalsRef.current.shift();
               }
 
-              // Calcular HR e HRV com dados suficientes
+              // Calculate HR and HRV with sufficient data
               if (rrIntervalsRef.current.length >= 10) {
                 const avgRR = rrIntervalsRef.current.reduce((a, b) => a + b, 0) / rrIntervalsRef.current.length;
                 const currentHR = Math.round(60000 / avgRR);
-                
-                // SDNN (desvio padrão dos RR intervals) como métrica de HRV
+
+                // SDNN (standard deviation of RR intervals) as HRV metric
                 const variance = rrIntervalsRef.current.reduce((sum, rr) => {
                   return sum + Math.pow(rr - avgRR, 2);
                 }, 0) / rrIntervalsRef.current.length;
@@ -112,7 +112,7 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
                 setHeartRate(currentHR);
                 setHRV(currentHRV);
 
-                // Notificar componente pai após 25s de dados (mais rápido)
+                // Notify parent component after 25s of data (faster)
                 const elapsed = (Date.now() - scanStartRef.current) / 1000;
                 if (elapsed >= 25 && rrIntervalsRef.current.length >= 15) {
                   onHRVDetected(currentHRV, currentHR);
@@ -158,7 +158,7 @@ export default function HRVMonitor({ videoRef, canvasRef, isScanning, onHRVDetec
           <span className="text-xs text-muted-foreground">ms HRV</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Monitoramento via rPPG (MIT) • Olhe para câmera
+          Monitoring via rPPG (MIT) • Look at camera
         </p>
       </div>
     </div>
